@@ -63,13 +63,11 @@
     <nav class="bg-purple-800 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
             <div class="flex flex-wrap items-center justify-between min-h-[64px] py-2 gap-2">
-                <!-- Marca / Título -->
                 <div class="flex items-center cursor-pointer select-none shrink-0" onclick="switchModule(appState.activeModule)">
                     <i class="fas fa-clipboard-list text-xl sm:text-2xl mr-2.5 text-amber-300"></i>
                     <span class="font-bold text-base sm:text-xl tracking-tight">Directorio Electoral Tlaxcala</span>
                 </div>
 
-                <!-- Pestañas de Módulos: Aspirantes / Autoridades (INE / ITE) -->
                 <div class="flex items-center space-x-2 order-3 md:order-2 w-full md:w-auto justify-center py-1 md:py-0">
                     <button id="tabBtnAspirantes" onclick="switchModule('aspirantes')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400">
                         <i class="fas fa-users mr-2"></i> Aspirantes
@@ -79,7 +77,6 @@
                     </button>
                 </div>
                 
-                <!-- Usuario, Salir y Botón Nuevo -->
                 <div class="flex items-center space-x-2 sm:space-x-3 order-2 md:order-3 shrink-0">
                     <span id="userStatusBadge" class="hidden text-[11px] sm:text-xs bg-purple-900/90 text-purple-100 border border-purple-600 px-3 py-1 rounded-full max-w-[160px] sm:max-w-xs truncate"></span>
                     
@@ -98,10 +95,9 @@
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         
         <!-- ========================================================= -->
-        <!-- MÓDULO 1: DIRECTORIO DE ASPIRANTES (DASHBOARD + DETALLE)  -->
+        <!-- MÓDULO 1: DIRECTORIO DE ASPIRANTES                        -->
         <!-- ========================================================= -->
         <div id="moduleAspirantes">
-            <!-- VISTA DE CUADRÍCULA (DASHBOARD ASPIRANTES) -->
             <div id="dashboardView">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-3">
                     <div>
@@ -196,7 +192,6 @@
                     </button>
                 </div>
                 
-                <!-- Ficha de Perfil -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6 relative">
                     <div class="absolute top-4 right-4 flex space-x-3">
                         <button id="btnDeleteProfile" onclick="confirmDelete()" class="text-gray-400 hover:text-red-600 transition hidden" title="Eliminar Aspirante Completamente">
@@ -229,7 +224,6 @@
                     </div>
                 </div>
 
-                <!-- Panel de Línea de tiempo y Medios -->
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     <div class="bg-white rounded-lg shadow-md p-6">
                         <div class="flex justify-between items-center mb-6">
@@ -251,7 +245,6 @@
                     </div>
                 </div>
 
-                <!-- Mapa de Calor Territorial -->
                 <div class="bg-white rounded-lg shadow-md p-6 mt-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold text-gray-800 border-b-2 border-green-600 pb-2 inline-block">Mapa de Actividad Territorial</h3>
@@ -267,7 +260,6 @@
         <!-- ========================================================= -->
         <div id="moduleAutoridades" class="hidden">
             
-            <!-- VISTA PRINCIPAL DE AUTORIDADES -->
             <div id="autoridadesDashboardView">
                 <div class="flex flex-col md:flex-row md:justify-between md:items-center mb-4 gap-3">
                     <div>
@@ -277,7 +269,6 @@
                     <div class="flex flex-wrap items-center gap-2">
                         <div class="text-sm font-medium text-purple-800 bg-purple-100 px-3 py-1 rounded-full" id="totalAutoridadesCount">0 registrados</div>
                         
-                        <!-- Conmutador Autoridades vs Sedes -->
                         <div class="inline-flex rounded-md shadow-sm border border-gray-300 bg-white overflow-hidden">
                             <button id="subTabFuncionarios" onclick="switchAutoridadesSubTab('funcionarios')" class="px-3 py-1.5 text-xs font-bold bg-purple-700 text-white transition">
                                 <i class="fas fa-user-tie mr-1"></i> Funcionariado / Consejos
@@ -295,7 +286,6 @@
 
                 <!-- SUB-VISTA A: FUNCIONARIADO Y CONSEJOS -->
                 <div id="subViewFuncionarios">
-                    <!-- FILTROS DE AUTORIDADES -->
                     <div class="bg-white p-4 rounded-lg shadow-sm border border-gray-200 mb-6">
                         <div class="grid grid-cols-1 md:grid-cols-5 gap-4">
                             <div class="md:col-span-2">
@@ -362,7 +352,6 @@
                         </div>
                     </div>
 
-                    <!-- CUADRÍCULA DE TARJETAS DE AUTORIDADES -->
                     <div id="autoridadesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
 
@@ -396,7 +385,6 @@
                     </button>
                 </div>
 
-                <!-- Ficha Principal de la Autoridad -->
                 <div class="bg-white rounded-lg shadow-md p-6 mb-6 relative">
                     <div class="absolute top-4 right-4 flex space-x-3">
                         <button id="btnDeleteAutoridad" onclick="confirmDeleteAutoridad()" class="text-gray-400 hover:text-red-600 transition hidden" title="Eliminar Autoridad">
@@ -421,7 +409,6 @@
                             <p id="autDetailPuesto" class="text-lg text-purple-700 font-semibold"></p>
                             <p id="autDetailOrganoAmbito" class="text-sm text-gray-600 font-medium mb-4"></p>
 
-                            <!-- Datos de Contacto y Adscripción -->
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
                                 <div>
                                     <span class="block text-xs font-bold text-gray-500 uppercase">Teléfono Directo / Ext.</span>
@@ -451,7 +438,6 @@
                     </div>
                 </div>
 
-                <!-- Tarjeta de Sede Electoral Asignada + Mapa de Ubicación -->
                 <div class="bg-white rounded-lg shadow-md p-6">
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold text-gray-800 border-b-2 border-purple-600 pb-2 inline-block">
@@ -469,11 +455,7 @@
         </div>
     </main>
 
-    <!-- ========================================================= -->
-    <!-- MODALES DEL MÓDULO 1 (ASPIRANTES, ACTIVIDADES, MEDIOS)    -->
-    <!-- ========================================================= -->
-
-    <!-- Modal de Perfil de Aspirante (Crear/Editar) -->
+    <!-- MODALES DEL MÓDULO 1 -->
     <div id="addModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex justify-center items-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50"><h3 id="profileModalTitle" class="text-lg font-semibold text-gray-800">Registrar Nuevo Aspirante</h3></div>
@@ -531,7 +513,6 @@
         </div>
     </div>
 
-    <!-- Modal de Actividad (Crear / Editar) -->
     <div id="activityModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex justify-center items-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200"><h3 id="activityModalTitle" class="text-lg font-semibold text-gray-800">Registrar Actividad</h3></div>
@@ -559,7 +540,6 @@
         </div>
     </div>
 
-    <!-- Modal de Publicación (Crear / Editar) -->
     <div id="publicationModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex justify-center items-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200"><h3 id="publicationModalTitle" class="text-lg font-semibold text-gray-800">Agregar al Monitoreo</h3></div>
@@ -577,11 +557,7 @@
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- MODALES DEL MÓDULO 2 (AUTORIDADES ELECTORALES Y SEDES)    -->
-    <!-- ========================================================= -->
-
-    <!-- Modal de Autoridad Electoral (Crear / Editar) -->
+    <!-- MODALES DEL MÓDULO 2 (AUTORIDADES ELECTORALES Y SEDES) -->
     <div id="autoridadModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex justify-center items-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-purple-50 flex justify-between items-center">
@@ -591,7 +567,6 @@
             <div class="p-6 overflow-y-auto max-h-[78vh] space-y-4">
                 <input type="hidden" id="formAutId">
 
-                <!-- Fotografía y Nombre -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center">
                     <div class="flex items-center space-x-3">
                         <div class="h-16 w-16 rounded-full bg-gray-200 border border-gray-300 overflow-hidden flex items-center justify-center shrink-0">
@@ -606,7 +581,6 @@
                     </div>
                 </div>
 
-                <!-- Institución, Órgano Colegiado y Ámbito -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Institución *</label>
@@ -644,7 +618,6 @@
                     </div>
                 </div>
 
-                <!-- Puesto, Calidad de Participación y Condición -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Puesto / Cargo *</label>
@@ -680,7 +653,6 @@
                     </div>
                 </div>
 
-                <!-- Partido/Organización, Sede y Estatus -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Partido / Organización</label>
@@ -714,7 +686,6 @@
                     </div>
                 </div>
 
-                <!-- Teléfono, Extensión y Correo -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Teléfono Directo</label>
@@ -747,7 +718,6 @@
         </div>
     </div>
 
-    <!-- Modal de Sede Electoral (Crear / Editar) -->
     <div id="sedeModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex justify-center items-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-lg mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-indigo-50 flex justify-between items-center">
@@ -813,8 +783,8 @@
         const SESSION_STORAGE_KEY = 'directorio_electoral_sesion_activa';
 
         let appState = { 
-            activeModule: 'aspirantes', // 'aspirantes' | 'autoridades'
-            autoridadesSubTab: 'funcionarios', // 'funcionarios' | 'sedes'
+            activeModule: 'aspirantes',
+            autoridadesSubTab: 'funcionarios',
             aspirantes: [], 
             autoridades: [],
             sedes: [],
@@ -852,10 +822,6 @@
             }
             return f;
         }
-
-        // ==========================================
-        // NAVEGACIÓN ENTRE MÓDULOS Y PERMISOS
-        // ==========================================
 
         function switchModule(mod) {
             appState.activeModule = mod;
@@ -1038,7 +1004,7 @@
                     document.getElementById('adminPasswordInput').focus(); 
                 }
             } catch (error) { 
-                alert("Error de conexión al verificar contraseña. Por favor intenta de nuevo."); 
+                alert("Error de conexión al verificar contraseña. Revisa que en Google Apps Script no haya archivos .gs duplicados en el mismo proyecto."); 
                 console.error(error);
             } finally { 
                 hideLoading(); 
@@ -1090,11 +1056,20 @@
         async function fetchInitialData() {
             try { 
                 showLoading('Cargando base de datos...'); 
-                const response = await fetch(`${API_URL}?accion=obtenerTodo`); 
+                const response = await fetch(`${API_URL}?accion=obtenerTodo`, {
+                    method: 'GET',
+                    redirect: 'follow'
+                }); 
                 const data = await response.json();
 
-                if (Array.isArray(data)) {
-                    // Respaldo por si el Apps Script aún devuelve sólo el arreglo de aspirantes
+                if (data && data.error === 'Acción no válida') {
+                    const fallbackRes = await fetch(`${API_URL}?accion=obtenerDatos`, {
+                        method: 'GET',
+                        redirect: 'follow'
+                    });
+                    const fallbackData = await fallbackRes.json() || [];
+                    appState.aspirantes = ordenarAspirantes(fallbackData);
+                } else if (Array.isArray(data)) {
                     appState.aspirantes = ordenarAspirantes(data);
                 } else if (data) {
                     appState.aspirantes = ordenarAspirantes(data.aspirantes || []);
@@ -1107,6 +1082,7 @@
                 renderAutoridades();
             } catch (error) { 
                 console.error("Error al obtener datos:", error); 
+                alert("No se pudo conectar con la base de datos. Asegúrate de eliminar archivos .gs duplicados en Apps Script y publicar una Nueva versión.");
             } finally { 
                 hideLoading(); 
             }
@@ -1115,15 +1091,18 @@
         async function postData(payload) { 
             const response = await fetch(API_URL, { 
                 method: 'POST', 
+                redirect: 'follow',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
                 body: JSON.stringify(payload) 
             }); 
-            return await response.json(); 
+            const text = await response.text();
+            try {
+                return JSON.parse(text);
+            } catch (err) {
+                console.error("Respuesta no válida del servidor:", text);
+                throw new Error("El servidor devolvió un error en lugar de JSON.");
+            }
         }
-
-        // ==========================================
-        // LÓGICA MÓDULO 1: ASPIRANTES
-        // ==========================================
 
         function limpiarFiltros() {
             document.getElementById('filterText').value = '';
@@ -1488,10 +1467,6 @@
             }
         }
 
-        // ==========================================
-        // LÓGICA MÓDULO 2: AUTORIDADES Y SEDES
-        // ==========================================
-
         function populateAutoridadesDynamicFilters() {
             const selectOrgano = document.getElementById('filterAutOrgano');
             const selectSede = document.getElementById('filterAutSede');
@@ -1716,7 +1691,6 @@
             document.getElementById('autDetailSintesis').innerText = aut.sintesisCurricular || 'Sin síntesis curricular capturada.';
             document.getElementById('autDetailModificadoPor').innerText = aut.modificadoPor || 'Sin registro';
 
-            // Información y Mapa de la Sede Electoral
             const sedeObj = obtenerSedePorId(aut.idSede);
             const sedeInfoDiv = document.getElementById('autDetailSedeInfo');
             const mapDiv = document.getElementById('autDetailMapContainer');
@@ -1878,10 +1852,6 @@
                 renderAutoridades();
             }
         }
-
-        // ==========================================
-        // FORMULARIOS Y CRUD: AUTORIDADES Y SEDES
-        // ==========================================
 
         function previewAutImage(event) {
             const file = event.target.files[0];
@@ -2158,10 +2128,6 @@
                 }
             }
         }
-
-        // ==========================================
-        // FUNCIONES DE FORMULARIOS ORIGINALES Y PDF
-        // ==========================================
 
         function openModal(id) { document.getElementById(id).classList.remove('hidden'); }
         function closeModal(id) { document.getElementById(id).classList.add('hidden'); }
