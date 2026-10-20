@@ -40,9 +40,15 @@
             <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
                 <h3 id="passwordModalTitle" class="text-lg font-semibold text-gray-800"><i class="fas fa-lock mr-2 text-gray-500"></i> Acceso</h3>
             </div>
-            <div class="p-6">
-                <label class="block text-sm font-medium text-gray-700 mb-2">Ingresa tu contraseña:</label>
-                <input type="password" id="adminPasswordInput" onkeypress="if(event.key === 'Enter') submitPassword()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="••••••••">
+            <div class="p-6 space-y-3">
+                <div>
+                    <label for="loginUsernameInput" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                    <input type="text" id="loginUsernameInput" autocomplete="username" maxlength="40" onkeypress="if(event.key === 'Enter') submitPassword()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Tu usuario">
+                </div>
+                <div>
+                    <label for="adminPasswordInput" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="adminPasswordInput" autocomplete="current-password" onkeypress="if(event.key === 'Enter') submitPassword()" class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="••••••••">
+                </div>
             </div>
             <div class="px-6 py-4 bg-gray-50 text-right space-x-3">
                 <button onclick="closeModal('passwordModal')" class="px-4 py-2 text-gray-600 border border-gray-300 rounded-md hover:bg-gray-100 transition">Cancelar</button>
@@ -584,7 +590,7 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Institución *</label>
-                        <select id="formAutInstitucion" onchange="handleInstitucionChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <select id="formAutInstitucion" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
                             <option value="INE">INE (Instituto Nacional Electoral)</option>
                             <option value="ITE">ITE (Instituto Tlaxcalteca de Elecciones)</option>
                         </select>
@@ -592,12 +598,29 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Órgano Colegiado / Área *</label>
                         <input type="text" id="formAutOrgano" list="listaOrganosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Consejo Local (Tlaxcala)">
-                        <datalist id="listaOrganosSugeridos"></datalist>
+                        <datalist id="listaOrganosSugeridos">
+                            <option value="Consejo Local (Tlaxcala)">
+                            <option value="Junta Local Ejecutiva">
+                            <option value="Consejo General del ITE">
+                            <option value="01 Consejo Distrital (Apizaco)">
+                            <option value="02 Consejo Distrital (Tlaxcala)">
+                            <option value="03 Consejo Distrital (Zacatelco)">
+                            <option value="01 Junta Distrital Ejecutiva">
+                            <option value="02 Junta Distrital Ejecutiva">
+                            <option value="03 Junta Distrital Ejecutiva">
+                            <option value="Consejo Distrital Local">
+                            <option value="Consejo Municipal Electoral">
+                        </datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ámbito / Distrito</label>
                         <input type="text" id="formAutAmbito" list="listaAmbitosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Estatal o Distrito 01">
-                        <datalist id="listaAmbitosSugeridos"></datalist>
+                        <datalist id="listaAmbitosSugeridos">
+                            <option value="Estatal">
+                            <option value="Distrito Federal 01 - Apizaco">
+                            <option value="Distrito Federal 02 - Tlaxcala">
+                            <option value="Distrito Federal 03 - Zacatelco">
+                        </datalist>
                     </div>
                 </div>
 
@@ -605,7 +628,17 @@
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Puesto / Cargo *</label>
                         <input type="text" id="formAutPuesto" list="listaPuestosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Vocal Ejecutivo/a">
-                        <datalist id="listaPuestosSugeridos"></datalist>
+                        <datalist id="listaPuestosSugeridos">
+                            <option value="Vocal Ejecutivo/a">
+                            <option value="Consejero/a Presidente/a">
+                            <option value="Secretario/a Ejecutivo/a">
+                            <option value="Vocal Secretario/a">
+                            <option value="Vocal de Organización Electoral">
+                            <option value="Vocal de Capacitación Electoral y Educación Cívica">
+                            <option value="Vocal del Registro Federal de Electores">
+                            <option value="Consejero/a Electoral">
+                            <option value="Representante de Partido Político">
+                        </datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Calidad de Participación</label>
@@ -752,8 +785,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxz0MVMrPUnN4HA6A2pUx_Xjom6oZ65hgIU_UuaixU2XZzUMjeWMF_iKiNwDOh9UDBX/exec";
-        const SESSION_STORAGE_KEY = 'directorio_electoral_sesion_activa';
+        const API_URL = "https://script.google.com/macros/s/AKfycbxzWqW62vY_CpA5FJBs7uaqCMx5Y6dK4cGgafRTn8jykJRYkCJ-qb1mJyfAzFHEssPR/exec";
 
         let appState = { 
             activeModule: 'aspirantes',
@@ -767,7 +799,7 @@
             isReadOnly: true, 
             role: 'guest', 
             userName: '', 
-            sessionPassword: null, 
+            sessionToken: null, 
             mapInstance: null,
             autMapInstance: null,
             sedesMapInstance: null
@@ -860,128 +892,79 @@
         }
 
         function checkSavedSession() {
-            try {
-                const sessionRaw = localStorage.getItem(SESSION_STORAGE_KEY);
-                if (sessionRaw) {
-                    const sessionData = JSON.parse(sessionRaw);
-                    if (sessionData && sessionData.role) {
-                        appState.role = sessionData.role;
-                        appState.userName = sessionData.userName || '';
-                        appState.sessionPassword = sessionData.sessionPassword || null;
-                        appState.isReadOnly = (sessionData.role === 'guest');
-
-                        document.getElementById('loginOverlay').classList.add('hidden');
-                        applyPermissions();
-                        fetchInitialData();
-                        return true;
-                    }
-                }
-            } catch (e) {
-                console.error("Error al recuperar sesión previa:", e);
-            }
+            // Las sesiones ya no se restauran desde localStorage. Esto elimina contraseñas/tokens persistentes.
+            try { localStorage.removeItem('directorio_electoral_sesion_activa'); } catch (e) {}
+            appState.role = 'guest';
+            appState.userName = 'Invitado';
+            appState.sessionToken = null;
+            appState.isReadOnly = true;
             return false;
         }
 
-        function saveActiveSession(role, userName, password) {
-            try {
-                localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify({
-                    role: role,
-                    userName: userName,
-                    sessionPassword: password
-                }));
-            } catch (e) {
-                console.error("Error al guardar la sesión:", e);
-            }
-        }
-
         function logout() {
-            if (confirm("¿Deseas cerrar tu sesión? Tendrás que ingresar tu contraseña nuevamente.")) {
-                try {
-                    localStorage.removeItem(SESSION_STORAGE_KEY);
-                } catch (e) {
-                    console.error("Error al limpiar la sesión:", e);
-                }
-
-                appState.role = 'guest';
-                appState.userName = '';
-                appState.sessionPassword = null;
-                appState.isReadOnly = true;
-                appState.selectedAspiranteId = null;
-                appState.selectedAutoridadId = null;
-
-                document.getElementById('adminPasswordInput').value = "";
-                document.getElementById('loginOverlay').classList.remove('hidden');
-                applyPermissions();
-                goHome();
-            }
-        }
-
-        function enterAsGuest() { 
-            appState.isReadOnly = true; 
-            appState.role = 'guest'; 
+            if (!confirm("¿Deseas cerrar tu sesión?")) return;
+            const token = appState.sessionToken;
+            if (token) postData({ accion: 'cerrarSesion', sessionToken: token }).catch(() => {});
+            appState.role = 'guest';
             appState.userName = 'Invitado';
-            appState.sessionPassword = null;
-
-            saveActiveSession('guest', 'Invitado', null);
-
-            document.getElementById('loginOverlay').classList.add('hidden'); 
-            applyPermissions(); 
-            fetchInitialData(); 
+            appState.sessionToken = null;
+            appState.isReadOnly = true;
+            appState.selectedAspiranteId = null;
+            appState.selectedAutoridadId = null;
+            document.getElementById('adminPasswordInput').value = "";
+            document.getElementById('loginUsernameInput').value = "";
+            document.getElementById('loginOverlay').classList.remove('hidden');
+            applyPermissions();
+            goHome();
         }
-        
-        function promptLogin(role) { 
-            loginRoleTarget = role; 
-            document.getElementById('adminPasswordInput').value = ""; 
-            
+
+        function enterAsGuest() {
+            appState.isReadOnly = true;
+            appState.role = 'guest';
+            appState.userName = 'Invitado';
+            appState.sessionToken = null;
+            document.getElementById('loginOverlay').classList.add('hidden');
+            applyPermissions();
+            fetchInitialData();
+        }
+
+        function promptLogin(role) {
+            loginRoleTarget = role;
+            document.getElementById('loginUsernameInput').value = "";
+            document.getElementById('adminPasswordInput').value = "";
             const titleEl = document.getElementById('passwordModalTitle');
-            if (titleEl) {
-                titleEl.innerHTML = `<i class="fas fa-lock mr-2 text-gray-500"></i> Acceso de ${role === 'admin' ? 'Administrador' : 'Capturista'}`;
-            }
-            
-            openModal('passwordModal'); 
-            setTimeout(() => document.getElementById('adminPasswordInput').focus(), 100); 
+            if (titleEl) titleEl.innerHTML = `<i class="fas fa-lock mr-2 text-gray-500"></i> Acceso de ${role === 'admin' ? 'Administrador' : 'Capturista'}`;
+            openModal('passwordModal');
+            setTimeout(() => document.getElementById('loginUsernameInput').focus(), 100);
         }
-        
+
         async function submitPassword() {
-            const passInput = document.getElementById('adminPasswordInput').value; 
-            if (!passInput) return; 
-            
+            const usuario = document.getElementById('loginUsernameInput').value.trim();
+            const passInput = document.getElementById('adminPasswordInput').value;
+            if (!usuario || !passInput) { alert('Ingresa usuario y contraseña.'); return; }
             showLoading('Verificando credenciales...');
             try {
-                const res = await postData({ 
-                    accion: 'verificarContrasena', 
-                    password: passInput.trim(), 
-                    rol: loginRoleTarget 
-                });
-                
-                if (res && res.exito) { 
-                    appState.isReadOnly = false; 
-                    appState.role = res.rol; 
-                    appState.userName = res.nombre || 'Usuario';
-                    appState.sessionPassword = passInput.trim(); 
-                    
-                    saveActiveSession(res.rol, appState.userName, appState.sessionPassword);
-
-                    closeModal('passwordModal'); 
-                    document.getElementById('loginOverlay').classList.add('hidden'); 
-                    applyPermissions(); 
-                    fetchInitialData(); 
-
-                    setTimeout(() => {
-                        alert(`¡Bienvenido(a), ${appState.userName}!`);
-                    }, 200);
-
-                } else { 
-                    alert(res && res.mensaje ? res.mensaje : "Contraseña incorrecta."); 
-                    document.getElementById('adminPasswordInput').value = ""; 
-                    document.getElementById('adminPasswordInput').focus(); 
+                const res = await postData({ accion: 'verificarContrasena', usuario, password: passInput, rol: loginRoleTarget });
+                if (res && res.exito && res.sessionToken) {
+                    appState.isReadOnly = false;
+                    appState.role = res.rol;
+                    appState.userName = res.nombre || usuario;
+                    appState.sessionToken = res.sessionToken;
+                    closeModal('passwordModal');
+                    document.getElementById('loginOverlay').classList.add('hidden');
+                    document.getElementById('adminPasswordInput').value = '';
+                    applyPermissions();
+                    fetchInitialData();
+                    setTimeout(() => alert(`¡Bienvenido(a), ${appState.userName}!`), 200);
+                } else {
+                    alert(res && res.mensaje ? res.mensaje : 'Usuario o contraseña incorrectos.');
+                    document.getElementById('adminPasswordInput').value = '';
+                    document.getElementById('adminPasswordInput').focus();
                 }
-            } catch (error) { 
-                alert("Error de conexión al verificar contraseña. Revisa que en Google Apps Script no haya archivos .gs duplicados en el mismo proyecto."); 
+            } catch (error) {
+                alert('No fue posible verificar las credenciales. Intenta nuevamente.');
                 console.error(error);
-            } finally { 
-                hideLoading(); 
-            }
+            } finally { hideLoading(); }
         }
 
         function applyPermissions() {
@@ -1143,57 +1126,6 @@
                 textInput.placeholder = "Nombre de la comunidad (Ej. San Bartolomé)";
             } else {
                 container.classList.add('hidden'); 
-            }
-        }
-
-        function handleInstitucionChange() {
-            const institucion = document.getElementById('formAutInstitucion').value;
-            const organosList = document.getElementById('listaOrganosSugeridos');
-            const ambitosList = document.getElementById('listaAmbitosSugeridos');
-            const puestosList = document.getElementById('listaPuestosSugeridos');
-
-            // Limpiamos las opciones actuales
-            organosList.innerHTML = '';
-            ambitosList.innerHTML = '';
-            puestosList.innerHTML = '';
-
-            // Limpiamos también el texto escrito previamente si se cambia de institución
-            document.getElementById('formAutOrgano').value = '';
-            document.getElementById('formAutAmbito').value = '';
-            document.getElementById('formAutPuesto').value = '';
-
-            if (institucion === 'INE') {
-                const organosINE = [
-                    'Consejo Local (Tlaxcala)', 'Junta Local Ejecutiva', 
-                    '01 Consejo Distrital (Apizaco)', '02 Consejo Distrital (Tlaxcala)', '03 Consejo Distrital (Zacatelco)', 
-                    '01 Junta Distrital Ejecutiva', '02 Junta Distrital Ejecutiva', '03 Junta Distrital Ejecutiva'
-                ];
-                organosINE.forEach(org => organosList.innerHTML += `<option value="${org}">`);
-
-                const ambitosINE = ['Estatal', 'Distrito Federal 01 - Apizaco', 'Distrito Federal 02 - Tlaxcala', 'Distrito Federal 03 - Zacatelco'];
-                ambitosINE.forEach(amb => ambitosList.innerHTML += `<option value="${amb}">`);
-
-                const puestosINE = [
-                    'Vocal Ejecutivo/a', 'Vocal Secretario/a', 'Vocal de Organización Electoral', 
-                    'Vocal de Capacitación Electoral y Educación Cívica', 'Vocal del Registro Federal de Electores', 
-                    'Consejero/a Electoral', 'Representante de Partido Político'
-                ];
-                puestosINE.forEach(puesto => puestosList.innerHTML += `<option value="${puesto}">`);
-                
-            } else if (institucion === 'ITE') {
-                const organosITE = ['Consejo General del ITE', 'Consejo Distrital Local', 'Consejo Municipal Electoral'];
-                organosITE.forEach(org => organosList.innerHTML += `<option value="${org}">`);
-
-                const ambitosITE = ['Estatal'];
-                LOC_DISTRITOS.forEach(d => ambitosITE.push(`Distrito Local ${d}`));
-                MUNICIPIOS.forEach(m => ambitosITE.push(`Municipio: ${m}`));
-                ambitosITE.forEach(amb => ambitosList.innerHTML += `<option value="${amb}">`);
-
-                const puestosITE = [
-                    'Consejero/a Presidente/a', 'Consejero/a Electoral', 
-                    'Secretario/a Ejecutivo/a', 'Representante de Partido Político'
-                ];
-                puestosITE.forEach(puesto => puestosList.innerHTML += `<option value="${puesto}">`);
             }
         }
 
@@ -1902,9 +1834,6 @@
             document.getElementById('formAutId').value = "";
             document.getElementById('formAutNombre').value = "";
             document.getElementById('formAutInstitucion').value = "INE";
-            
-            handleInstitucionChange(); // Genera opciones dinámicamente
-            
             document.getElementById('formAutOrgano').value = "";
             document.getElementById('formAutAmbito').value = "Estatal";
             document.getElementById('formAutPuesto').value = "";
@@ -1937,9 +1866,6 @@
             document.getElementById('formAutId').value = aut.id;
             document.getElementById('formAutNombre').value = aut.nombreCompleto || "";
             document.getElementById('formAutInstitucion').value = aut.institucion || "INE";
-            
-            handleInstitucionChange(); // Genera opciones dinámicamente
-
             document.getElementById('formAutOrgano').value = aut.organoColegiado || "";
             document.getElementById('formAutAmbito').value = aut.ambitoDistrito || "";
             document.getElementById('formAutPuesto').value = aut.puestoCargo || "";
@@ -2001,7 +1927,7 @@
                 showLoading(id ? 'Actualizando autoridad...' : 'Guardando autoridad...');
                 const res = await postData({
                     accion: id ? 'actualizarAutoridad' : 'guardarAutoridad',
-                    password: appState.sessionPassword,
+                    sessionToken: appState.sessionToken,
                     autoridad: payload
                 });
 
@@ -2038,7 +1964,7 @@
                 try {
                     const res = await postData({
                         accion: 'eliminarAutoridad',
-                        password: appState.sessionPassword,
+                        sessionToken: appState.sessionToken,
                         id: appState.selectedAutoridadId
                     });
                     if (res && res.exito) {
@@ -2110,7 +2036,7 @@
                 showLoading(isEdit ? 'Actualizando sede...' : 'Guardando sede...');
                 const res = await postData({
                     accion: isEdit ? 'actualizarSede' : 'guardarSede',
-                    password: appState.sessionPassword,
+                    sessionToken: appState.sessionToken,
                     sede: payload
                 });
 
@@ -2141,7 +2067,7 @@
                 try {
                     const res = await postData({
                         accion: 'eliminarSede',
-                        password: appState.sessionPassword,
+                        sessionToken: appState.sessionToken,
                         id: idSede
                     });
                     if (res && res.exito) {
@@ -2289,7 +2215,7 @@
                 showLoading(id ? 'Actualizando...' : 'Guardando... Esto puede tardar unos segundos.'); 
                 const res = await postData({ 
                     accion: id ? 'actualizarAspirante' : 'guardarAspirante', 
-                    password: appState.sessionPassword, 
+                    sessionToken: appState.sessionToken, 
                     aspirante: { id, ...payload } 
                 }); 
                 
@@ -2381,7 +2307,7 @@
                 const accion = actId ? 'actualizarActividad' : 'guardarActividad';
                 const res = await postData({ 
                     accion: accion, 
-                    password: appState.sessionPassword, 
+                    sessionToken: appState.sessionToken, 
                     actividad: payload 
                 });
                 
@@ -2455,7 +2381,7 @@
                 const accion = pubId ? 'actualizarPublicacion' : 'guardarPublicacion';
                 const res = await postData({ 
                     accion: accion, 
-                    password: appState.sessionPassword, 
+                    sessionToken: appState.sessionToken, 
                     publicacion: payload 
                 });
                 
@@ -2684,7 +2610,7 @@
                 try {
                     const res = await postData({ 
                         accion: 'eliminarAspirante', 
-                        password: appState.sessionPassword, 
+                        sessionToken: appState.sessionToken, 
                         id: appState.selectedAspiranteId 
                     });
                     if(res && res.exito) {
