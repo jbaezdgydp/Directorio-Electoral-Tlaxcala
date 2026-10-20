@@ -292,7 +292,7 @@
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Buscar Autoridad</label>
                                 <div class="relative">
                                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none"><i class="fas fa-search text-gray-400"></i></div>
-                                    <input type="text" id="filterAutText" onkeyup="renderAutoridades()" class="pl-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Nombre, cargo, municipio, distrito, correo...">
+                                    <input type="text" id="filterAutText" onkeyup="renderAutoridades()" class="pl-10 w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="Nombre, cargo, distrito, correo...">
                                 </div>
                             </div>
                             <div>
@@ -305,7 +305,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Órgano Colegiado</label>
-                                <select id="filterAutOrgano" onchange="handleFiltroAutOrganoChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <select id="filterAutOrgano" onchange="renderAutoridades()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
                                     <option value="Todos">Todos los órganos</option>
                                 </select>
                             </div>
@@ -313,16 +313,6 @@
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Sede Electoral</label>
                                 <select id="filterAutSede" onchange="renderAutoridades()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
                                     <option value="Todas">Todas las sedes</option>
-                                </select>
-                            </div>
-                        </div>
-
-                        <!-- Subfiltro dinámico de Municipio cuando se filtra por Consejo Municipal Electoral -->
-                        <div id="containerFiltroAutMunicipio" class="hidden mt-3 bg-purple-50 p-3 rounded-md border border-purple-200">
-                            <div class="flex flex-col sm:flex-row sm:items-center gap-2">
-                                <label class="text-xs font-bold text-purple-800 uppercase whitespace-nowrap"><i class="fas fa-city mr-1"></i>Filtrar Consejo Municipal por Municipio:</label>
-                                <select id="filterAutMunicipio" onchange="renderAutoridades()" class="w-full sm:w-80 border border-purple-300 rounded-md px-3 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
-                                    <option value="Todos">Todos los municipios (60)</option>
                                 </select>
                             </div>
                         </div>
@@ -567,9 +557,7 @@
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- MODALES DEL MÓDULO 2 (AUTORIDADES ELECTORALES Y SEDES)    -->
-    <!-- ========================================================= -->
+    <!-- MODALES DEL MÓDULO 2 (AUTORIDADES ELECTORALES Y SEDES) -->
     <div id="autoridadModal" class="fixed inset-0 bg-gray-900 bg-opacity-50 hidden z-50 flex justify-center items-center">
         <div class="bg-white rounded-lg shadow-xl w-full max-w-2xl mx-4 overflow-hidden">
             <div class="px-6 py-4 border-b border-gray-200 bg-purple-50 flex justify-between items-center">
@@ -593,73 +581,31 @@
                     </div>
                 </div>
 
-                <!-- Institución, Órgano Colegiado y Ámbito / Municipio Dinámico -->
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Institución *</label>
-                        <select id="formAutInstitucion" onchange="handleAutOrganoChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <select id="formAutInstitucion" onchange="handleInstitucionChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
                             <option value="INE">INE (Instituto Nacional Electoral)</option>
                             <option value="ITE">ITE (Instituto Tlaxcalteca de Elecciones)</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Órgano Colegiado / Área *</label>
-                        <input type="text" id="formAutOrgano" list="listaOrganosSugeridos" oninput="handleAutOrganoChange()" onchange="handleAutOrganoChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Consejo Municipal Electoral">
-                        <datalist id="listaOrganosSugeridos">
-                            <option value="Consejo Local (Tlaxcala)">
-                            <option value="Junta Local Ejecutiva">
-                            <option value="Consejo General del ITE">
-                            <option value="Consejo Municipal Electoral">
-                            <option value="Consejo Distrital Local">
-                            <option value="01 Consejo Distrital (Apizaco)">
-                            <option value="02 Consejo Distrital (Tlaxcala)">
-                            <option value="03 Consejo Distrital (Zacatelco)">
-                            <option value="01 Junta Distrital Ejecutiva">
-                            <option value="02 Junta Distrital Ejecutiva">
-                            <option value="03 Junta Distrital Ejecutiva">
-                        </datalist>
+                        <input type="text" id="formAutOrgano" list="listaOrganosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Consejo Local (Tlaxcala)">
+                        <datalist id="listaOrganosSugeridos"></datalist>
                     </div>
                     <div>
-                        <label id="labelAutAmbito" class="block text-xs font-bold text-gray-700 uppercase mb-1">Ámbito / Distrito</label>
-                        
-                        <!-- Input normal cuando es Estatal / Federal -->
+                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ámbito / Distrito</label>
                         <input type="text" id="formAutAmbito" list="listaAmbitosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Estatal o Distrito 01">
-                        <datalist id="listaAmbitosSugeridos">
-                            <option value="Estatal">
-                            <option value="Distrito Federal 01 - Apizaco">
-                            <option value="Distrito Federal 02 - Tlaxcala">
-                            <option value="Distrito Federal 03 - Zacatelco">
-                        </datalist>
-
-                        <!-- Lista desplegable de los 60 Municipios cuando es Consejo Municipal Electoral -->
-                        <select id="formAutMunicipioSelect" class="hidden w-full border border-purple-400 bg-purple-50 rounded-md px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="">Selecciona el municipio...</option>
-                        </select>
-
-                        <!-- Lista desplegable de los 15 Distritos Locales cuando es Consejo Distrital Local -->
-                        <select id="formAutDistritoLocalSelect" class="hidden w-full border border-purple-400 bg-purple-50 rounded-md px-3 py-2 text-sm font-medium text-gray-800 focus:outline-none focus:ring-2 focus:ring-purple-500">
-                            <option value="">Selecciona el distrito local...</option>
-                        </select>
+                        <datalist id="listaAmbitosSugeridos"></datalist>
                     </div>
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Puesto / Cargo *</label>
-                        <input type="text" id="formAutPuesto" list="listaPuestosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Consejero/a Presidente/a">
-                        <datalist id="listaPuestosSugeridos">
-                            <option value="Vocal Ejecutivo/a">
-                            <option value="Consejero/a Presidente/a">
-                            <option value="Secretario/a Ejecutivo/a">
-                            <option value="Secretario/a del Consejo Municipal">
-                            <option value="Consejero/a Electoral">
-                            <option value="Consejero/a Electoral Municipal">
-                            <option value="Vocal Secretario/a">
-                            <option value="Vocal de Organización Electoral">
-                            <option value="Vocal de Capacitación Electoral y Educación Cívica">
-                            <option value="Vocal del Registro Federal de Electores">
-                            <option value="Representante de Partido Político">
-                        </datalist>
+                        <input type="text" id="formAutPuesto" list="listaPuestosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Vocal Ejecutivo/a">
+                        <datalist id="listaPuestosSugeridos"></datalist>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Calidad de Participación</label>
@@ -806,7 +752,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzOo3M5BYmDXbsIG4iKUYQGjQCZex8oQxMP8BadoD-i5j6j6e1dacmsbb4WUPDUMUQEag/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbxz0MVMrPUnN4HA6A2pUx_Xjom6oZ65hgIU_UuaixU2XZzUMjeWMF_iKiNwDOh9UDBX/exec";
         const SESSION_STORAGE_KEY = 'directorio_electoral_sesion_activa';
 
         let appState = { 
@@ -833,79 +779,6 @@
         const MUNICIPIOS = ["Acuamanala de Miguel Hidalgo", "Amaxac de Guerrero", "Apetatitlán de Antonio Carvajal", "Apizaco", "Atlangatepec", "Atltzayanca", "Benito Juárez", "Calpulalpan", "Chiautempan", "Contla de Juan Cuamatzi", "Cuapiaxtla", "Cuaxomulco", "El Carmen Tequexquitla", "Emiliano Zapata", "Españita", "Huamantla", "Hueyotlipan", "Ixtacuixtla de Mariano Matamoros", "Ixtenco", "La Magdalena Tlaltelulco", "Lázaro Cárdenas", "Mazatecochco de José María Morelos", "Muñoz de Domingo Arenas", "Nanacamilpa de Mariano Arista", "Natívitas", "Panotla", "Papalotla de Xicohténcatl", "San Damián Texóloc", "San Francisco Tetlanohcan", "San Jerónimo Zacualpan", "San José Teacalco", "San Juan Huactzinco", "San Lorenzo Axocomanitla", "San Lucas Tecopilco", "San Pablo del Monte", "Sanctórum de Lázaro Cárdenas", "Santa Ana Nopalucan", "Santa Apolonia Teacalco", "Santa Catarina Ayometla", "Santa Cruz Quilehtla", "Santa Cruz Tlaxcala", "Santa Isabel Xiloxoxtla", "Tenancingo", "Teolocholco", "Tepetitla de Lardizábal", "Tepeyanco", "Terrenate", "Tetla de la Solidaridad", "Tetlatlahuca", "Tlaxcala", "Tlaxco", "Tocatlán", "Totolac", "Tzompantepec", "Xaloztoc", "Xaltocan", "Xicohtzinco", "Yauhquemehcan", "Zacatelco", "Ziltlaltépec de Trinidad Sánchez Santos"];
         const FED_DISTRITOS = ["I", "II", "III"];
         const LOC_DISTRITOS = ["I", "II", "III", "IV", "V", "VI", "VII", "VIII", "IX", "X", "XI", "XII", "XIII", "XIV", "XV"];
-
-        function inicializarListasMunicipiosAutoridades() {
-            const selectModalMun = document.getElementById('formAutMunicipioSelect');
-            if (selectModalMun) {
-                selectModalMun.innerHTML = '<option value="">Selecciona el municipio...</option>';
-                MUNICIPIOS.forEach(m => {
-                    selectModalMun.innerHTML += `<option value="${m}">${m}</option>`;
-                });
-            }
-
-            const selectModalDistLocal = document.getElementById('formAutDistritoLocalSelect');
-            if (selectModalDistLocal) {
-                selectModalDistLocal.innerHTML = '<option value="">Selecciona el distrito local...</option>';
-                LOC_DISTRITOS.forEach(d => {
-                    selectModalDistLocal.innerHTML += `<option value="Distrito Local ${d}">Distrito Local ${d}</option>`;
-                });
-            }
-
-            const selectFiltroMun = document.getElementById('filterAutMunicipio');
-            if (selectFiltroMun) {
-                selectFiltroMun.innerHTML = '<option value="Todos">Todos los municipios (60)</option>';
-                MUNICIPIOS.forEach(m => {
-                    selectFiltroMun.innerHTML += `<option value="${m}">${m}</option>`;
-                });
-            }
-        }
-
-        // Detecta cuando se elige "Consejo Municipal Electoral" o "Consejo Distrital Local" en el modal de Autoridades
-        function handleAutOrganoChange() {
-            const organoVal = (document.getElementById('formAutOrgano')?.value || '').trim().toLowerCase();
-            const labelAmbito = document.getElementById('labelAutAmbito');
-            const inputAmbito = document.getElementById('formAutAmbito');
-            const selectMunicipio = document.getElementById('formAutMunicipioSelect');
-            const selectDistritoLocal = document.getElementById('formAutDistritoLocalSelect');
-
-            if (!inputAmbito || !selectMunicipio || !selectDistritoLocal) return;
-
-            if (organoVal.includes('consejo municipal')) {
-                labelAmbito.innerText = 'Municipio *';
-                labelAmbito.className = 'block text-xs font-bold text-purple-700 uppercase mb-1';
-                inputAmbito.classList.add('hidden');
-                selectDistritoLocal.classList.add('hidden');
-                selectMunicipio.classList.remove('hidden');
-            } else if (organoVal.includes('consejo distrital local')) {
-                labelAmbito.innerText = 'Distrito Local *';
-                labelAmbito.className = 'block text-xs font-bold text-purple-700 uppercase mb-1';
-                inputAmbito.classList.add('hidden');
-                selectMunicipio.classList.add('hidden');
-                selectDistritoLocal.classList.remove('hidden');
-            } else {
-                labelAmbito.innerText = 'Ámbito / Distrito';
-                labelAmbito.className = 'block text-xs font-bold text-gray-700 uppercase mb-1';
-                selectMunicipio.classList.add('hidden');
-                selectDistritoLocal.classList.add('hidden');
-                inputAmbito.classList.remove('hidden');
-            }
-        }
-
-        function handleFiltroAutOrganoChange() {
-            const orgSelected = (document.getElementById('filterAutOrgano')?.value || '').toLowerCase();
-            const containerMun = document.getElementById('containerFiltroAutMunicipio');
-            const selectMun = document.getElementById('filterAutMunicipio');
-
-            if (containerMun && selectMun) {
-                if (orgSelected.includes('consejo municipal')) {
-                    containerMun.classList.remove('hidden');
-                } else {
-                    containerMun.classList.add('hidden');
-                    selectMun.value = 'Todos';
-                }
-            }
-            renderAutoridades();
-        }
 
         function ordenarAspirantes(lista) {
             return lista.sort((a, b) => (a.nombre || '').localeCompare(b.nombre || '', 'es', { sensitivity: 'base' }));
@@ -1104,7 +977,7 @@
                     document.getElementById('adminPasswordInput').focus(); 
                 }
             } catch (error) { 
-                alert("Error de conexión al verificar contraseña."); 
+                alert("Error de conexión al verificar contraseña. Revisa que en Google Apps Script no haya archivos .gs duplicados en el mismo proyecto."); 
                 console.error(error);
             } finally { 
                 hideLoading(); 
@@ -1182,7 +1055,7 @@
                 renderAutoridades();
             } catch (error) { 
                 console.error("Error al obtener datos:", error); 
-                alert("No se pudo conectar con la base de datos.");
+                alert("No se pudo conectar con la base de datos. Asegúrate de eliminar archivos .gs duplicados en Apps Script y publicar una Nueva versión.");
             } finally { 
                 hideLoading(); 
             }
@@ -1270,6 +1143,57 @@
                 textInput.placeholder = "Nombre de la comunidad (Ej. San Bartolomé)";
             } else {
                 container.classList.add('hidden'); 
+            }
+        }
+
+        function handleInstitucionChange() {
+            const institucion = document.getElementById('formAutInstitucion').value;
+            const organosList = document.getElementById('listaOrganosSugeridos');
+            const ambitosList = document.getElementById('listaAmbitosSugeridos');
+            const puestosList = document.getElementById('listaPuestosSugeridos');
+
+            // Limpiamos las opciones actuales
+            organosList.innerHTML = '';
+            ambitosList.innerHTML = '';
+            puestosList.innerHTML = '';
+
+            // Limpiamos también el texto escrito previamente si se cambia de institución
+            document.getElementById('formAutOrgano').value = '';
+            document.getElementById('formAutAmbito').value = '';
+            document.getElementById('formAutPuesto').value = '';
+
+            if (institucion === 'INE') {
+                const organosINE = [
+                    'Consejo Local (Tlaxcala)', 'Junta Local Ejecutiva', 
+                    '01 Consejo Distrital (Apizaco)', '02 Consejo Distrital (Tlaxcala)', '03 Consejo Distrital (Zacatelco)', 
+                    '01 Junta Distrital Ejecutiva', '02 Junta Distrital Ejecutiva', '03 Junta Distrital Ejecutiva'
+                ];
+                organosINE.forEach(org => organosList.innerHTML += `<option value="${org}">`);
+
+                const ambitosINE = ['Estatal', 'Distrito Federal 01 - Apizaco', 'Distrito Federal 02 - Tlaxcala', 'Distrito Federal 03 - Zacatelco'];
+                ambitosINE.forEach(amb => ambitosList.innerHTML += `<option value="${amb}">`);
+
+                const puestosINE = [
+                    'Vocal Ejecutivo/a', 'Vocal Secretario/a', 'Vocal de Organización Electoral', 
+                    'Vocal de Capacitación Electoral y Educación Cívica', 'Vocal del Registro Federal de Electores', 
+                    'Consejero/a Electoral', 'Representante de Partido Político'
+                ];
+                puestosINE.forEach(puesto => puestosList.innerHTML += `<option value="${puesto}">`);
+                
+            } else if (institucion === 'ITE') {
+                const organosITE = ['Consejo General del ITE', 'Consejo Distrital Local', 'Consejo Municipal Electoral'];
+                organosITE.forEach(org => organosList.innerHTML += `<option value="${org}">`);
+
+                const ambitosITE = ['Estatal'];
+                LOC_DISTRITOS.forEach(d => ambitosITE.push(`Distrito Local ${d}`));
+                MUNICIPIOS.forEach(m => ambitosITE.push(`Municipio: ${m}`));
+                ambitosITE.forEach(amb => ambitosList.innerHTML += `<option value="${amb}">`);
+
+                const puestosITE = [
+                    'Consejero/a Presidente/a', 'Consejero/a Electoral', 
+                    'Secretario/a Ejecutivo/a', 'Representante de Partido Político'
+                ];
+                puestosITE.forEach(puesto => puestosList.innerHTML += `<option value="${puesto}">`);
             }
         }
 
@@ -1573,18 +1497,16 @@
             const formSelectSede = document.getElementById('formAutIdSede');
 
             if (selectOrgano) {
-                const organosSet = new Set(['Consejo Municipal Electoral', 'Consejo Distrital Local']);
+                const organosSet = new Set();
                 appState.autoridades.forEach(a => {
                     if (a.organoColegiado && a.organoColegiado.trim() !== '') {
                         organosSet.add(a.organoColegiado.trim());
                     }
                 });
-                const prevVal = selectOrgano.value || 'Todos';
                 selectOrgano.innerHTML = '<option value="Todos">Todos los órganos</option>';
                 Array.from(organosSet).sort().forEach(org => {
                     selectOrgano.innerHTML += `<option value="${org}">${org}</option>`;
                 });
-                if (Array.from(organosSet).includes(prevVal)) selectOrgano.value = prevVal;
             }
 
             if (selectSede) {
@@ -1613,12 +1535,6 @@
             document.getElementById('filterAutParticipacion').value = 'Todas';
             document.getElementById('filterAutCondicion').value = 'Todas';
             document.getElementById('filterAutEstatus').value = 'Todos';
-            if (document.getElementById('filterAutMunicipio')) {
-                document.getElementById('filterAutMunicipio').value = 'Todos';
-            }
-            if (document.getElementById('containerFiltroAutMunicipio')) {
-                document.getElementById('containerFiltroAutMunicipio').classList.add('hidden');
-            }
             renderAutoridades();
         }
 
@@ -1638,7 +1554,6 @@
             const part = document.getElementById('filterAutParticipacion')?.value || 'Todas';
             const cond = document.getElementById('filterAutCondicion')?.value || 'Todas';
             const est = document.getElementById('filterAutEstatus')?.value || 'Todos';
-            const munFiltro = document.getElementById('filterAutMunicipio')?.value || 'Todos';
 
             let filtradas = appState.autoridades.filter(a => {
                 const targetText = `${a.nombreCompleto || ''} ${a.puestoCargo || ''} ${a.organoColegiado || ''} ${a.ambitoDistrito || ''} ${a.correoElectronico || ''} ${a.partidoOrganizacion || ''}`.toLowerCase();
@@ -1649,9 +1564,8 @@
                 const matchPart = part === 'Todas' || a.calidadParticipacion === part;
                 const matchCond = cond === 'Todas' || a.condicion === cond;
                 const matchEst = est === 'Todos' || (a.estatus || 'Activo') === est;
-                const matchMun = munFiltro === 'Todos' || (a.ambitoDistrito && a.ambitoDistrito.toLowerCase().includes(munFiltro.toLowerCase()));
 
-                return matchText && matchInst && matchOrg && matchSede && matchPart && matchCond && matchEst && matchMun;
+                return matchText && matchInst && matchOrg && matchSede && matchPart && matchCond && matchEst;
             });
 
             filtradas = ordenarAutoridades(filtradas);
@@ -1708,7 +1622,7 @@
                         </div>
 
                         <div class="text-xs text-gray-600 space-y-1.5 mt-3 pt-3 border-t border-gray-100">
-                            <p><i class="fas fa-sitemap w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Órgano:</b> ${aut.organoColegiado || 'N/A'} ${aut.ambitoDistrito ? `<span class="font-semibold text-purple-800">(${aut.ambitoDistrito})</span>` : ''}</p>
+                            <p><i class="fas fa-sitemap w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Órgano:</b> ${aut.organoColegiado || 'N/A'} ${aut.ambitoDistrito ? `(${aut.ambitoDistrito})` : ''}</p>
                             ${aut.partidoOrganizacion && aut.partidoOrganizacion !== 'No aplica' ? `<p><i class="fas fa-flag w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Partido:</b> ${aut.partidoOrganizacion}</p>` : ''}
                             ${telCompleto ? `<p><i class="fas fa-phone w-4 text-gray-400 mr-1"></i> ${telCompleto}</p>` : ''}
                             ${aut.correoElectronico ? `<p class="truncate"><i class="fas fa-envelope w-4 text-gray-400 mr-1"></i> ${aut.correoElectronico}</p>` : ''}
@@ -1774,10 +1688,7 @@
 
             document.getElementById('autDetailNombre').innerText = aut.nombreCompleto || '';
             document.getElementById('autDetailPuesto').innerText = aut.puestoCargo || '';
-            
-            const esConsejoMun = (aut.organoColegiado || '').toLowerCase().includes('consejo municipal');
-            const etiquetaAmbito = esConsejoMun ? 'Municipio' : 'Ámbito / Distrito';
-            document.getElementById('autDetailOrganoAmbito').innerText = `${aut.organoColegiado || ''}${aut.ambitoDistrito ? ` • ${etiquetaAmbito}: ${aut.ambitoDistrito}` : ''}`;
+            document.getElementById('autDetailOrganoAmbito').innerText = `${aut.organoColegiado || ''} ${aut.ambitoDistrito ? ' • Ámbito: ' + aut.ambitoDistrito : ''}`;
 
             const telText = aut.telefonoDirecto
                 ? `${aut.telefonoDirecto}${aut.extension ? ' (Ext. ' + aut.extension + ')' : ''}`
@@ -1987,16 +1898,15 @@
 
         function prepareNewAutoridad() {
             populateAutoridadesDynamicFilters();
-            inicializarListasMunicipiosAutoridades();
-
             document.getElementById('autoridadModalTitle').innerHTML = `<i class="fas fa-landmark mr-2"></i>Registrar Nueva Autoridad Electoral`;
             document.getElementById('formAutId').value = "";
             document.getElementById('formAutNombre').value = "";
             document.getElementById('formAutInstitucion').value = "INE";
+            
+            handleInstitucionChange(); // Genera opciones dinámicamente
+            
             document.getElementById('formAutOrgano').value = "";
             document.getElementById('formAutAmbito').value = "Estatal";
-            document.getElementById('formAutMunicipioSelect').value = "";
-            document.getElementById('formAutDistritoLocalSelect').value = "";
             document.getElementById('formAutPuesto').value = "";
             document.getElementById('formAutCalidad').value = "Voz y Voto";
             document.getElementById('formAutCondicion').value = "Propietario";
@@ -2009,8 +1919,6 @@
             document.getElementById('formAutRedes').value = "";
             document.getElementById('formAutSintesis').value = "";
             document.getElementById('formAutFoto').value = "";
-
-            handleAutOrganoChange();
 
             currentAutBase64Image = null;
             document.getElementById('autFotoPreview').src = "";
@@ -2025,16 +1933,15 @@
             if (!aut) return;
 
             populateAutoridadesDynamicFilters();
-            inicializarListasMunicipiosAutoridades();
-
             document.getElementById('autoridadModalTitle').innerHTML = `<i class="fas fa-edit mr-2"></i>Editar Autoridad Electoral`;
             document.getElementById('formAutId').value = aut.id;
             document.getElementById('formAutNombre').value = aut.nombreCompleto || "";
             document.getElementById('formAutInstitucion').value = aut.institucion || "INE";
+            
+            handleInstitucionChange(); // Genera opciones dinámicamente
+
             document.getElementById('formAutOrgano').value = aut.organoColegiado || "";
             document.getElementById('formAutAmbito').value = aut.ambitoDistrito || "";
-            document.getElementById('formAutMunicipioSelect').value = aut.ambitoDistrito || "";
-            document.getElementById('formAutDistritoLocalSelect').value = aut.ambitoDistrito || "";
             document.getElementById('formAutPuesto').value = aut.puestoCargo || "";
             document.getElementById('formAutCalidad').value = aut.calidadParticipacion || "Voz y Voto";
             document.getElementById('formAutCondicion').value = aut.condicion || "Propietario";
@@ -2047,8 +1954,6 @@
             document.getElementById('formAutRedes').value = aut.redesSociales || "";
             document.getElementById('formAutSintesis').value = aut.sintesisCurricular || "";
             document.getElementById('formAutFoto').value = "";
-
-            handleAutOrganoChange();
 
             currentAutBase64Image = null;
             if (aut.foto && aut.foto.trim() !== '') {
@@ -2066,30 +1971,12 @@
 
         async function processAutoridadForm() {
             const id = document.getElementById('formAutId').value;
-            const organoVal = document.getElementById('formAutOrgano').value.trim();
-            const organoLower = organoVal.toLowerCase();
-
-            let ambitoFinal = document.getElementById('formAutAmbito').value.trim();
-            if (organoLower.includes('consejo municipal')) {
-                ambitoFinal = document.getElementById('formAutMunicipioSelect').value;
-                if (!ambitoFinal) {
-                    alert("Por favor selecciona de la lista a qué Municipio pertenece el Consejo Municipal Electoral.");
-                    return;
-                }
-            } else if (organoLower.includes('consejo distrital local')) {
-                ambitoFinal = document.getElementById('formAutDistritoLocalSelect').value;
-                if (!ambitoFinal) {
-                    alert("Por favor selecciona el Distrito Local al que pertenece el Consejo.");
-                    return;
-                }
-            }
-
             const payload = {
                 id: id || null,
                 nombreCompleto: document.getElementById('formAutNombre').value.trim(),
                 institucion: document.getElementById('formAutInstitucion').value,
-                organoColegiado: organoVal,
-                ambitoDistrito: ambitoFinal,
+                organoColegiado: document.getElementById('formAutOrgano').value.trim(),
+                ambitoDistrito: document.getElementById('formAutAmbito').value.trim(),
                 puestoCargo: document.getElementById('formAutPuesto').value.trim(),
                 calidadParticipacion: document.getElementById('formAutCalidad').value,
                 condicion: document.getElementById('formAutCondicion').value,
@@ -2815,7 +2702,6 @@
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            inicializarListasMunicipiosAutoridades();
             checkSavedSession();
         });
     </script>
