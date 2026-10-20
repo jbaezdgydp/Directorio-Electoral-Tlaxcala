@@ -597,19 +597,19 @@
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Órgano Colegiado / Área *</label>
-                        <input type="text" id="formAutOrgano" list="listaOrganosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Consejo Local (Tlaxcala)">
-                        <datalist id="listaOrganosSugeridos">
-                             <option value="Consejo Local (Tlaxcala)">
-                             <option value="Junta Local Ejecutiva">
-                             <option value="Consejo Distrital 01 (Apizaco)">
-                             <option value="Consejo Distrital 02 (Tlaxcala)">
-                             <option value="Consejo Distrital 03 (Zacatelco)">
-                             <option value="Consejo General (ITE)">
-                             <option value="Junta General Ejecutiva (ITE)">
-                             <option value="Direcciones Ejecutivas y Áreas Técnicas (ITE)">
-                             <option value="Consejo Distrital Electoral (ITE)">
-                             <option value="Consejo Municipal Electoral (ITE)">
-                        </datalist>
+                        <select id="formAutOrgano" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+<option value="">Selecciona una opción...</option>
+<option value="Consejo Local (Tlaxcala)">Consejo Local (Tlaxcala)</option>
+<option value="Junta Local Ejecutiva">Junta Local Ejecutiva</option>
+<option value="Consejo Distrital 01 (Apizaco)">Consejo Distrital 01 (Apizaco)</option>
+<option value="Consejo Distrital 02 (Tlaxcala)">Consejo Distrital 02 (Tlaxcala)</option>
+<option value="Consejo Distrital 03 (Zacatelco)">Consejo Distrital 03 (Zacatelco)</option>
+<option value="Consejo General (ITE)">Consejo General (ITE)</option>
+<option value="Junta General Ejecutiva (ITE)">Junta General Ejecutiva (ITE)</option>
+<option value="Direcciones Ejecutivas y Áreas Técnicas (ITE)">Direcciones Ejecutivas y Áreas Técnicas (ITE)</option>
+<option value="Consejo Distrital Electoral (ITE)">Consejo Distrital Electoral (ITE)</option>
+<option value="Consejo Municipal Electoral (ITE)">Consejo Municipal Electoral (ITE)</option>
+</select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ámbito / Distrito</label>
@@ -642,21 +642,21 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Puesto / Cargo *</label>
-                        <input type="text" id="formAutPuesto" list="listaPuestosSugeridos" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Vocal Ejecutivo/a">
-                        <datalist id="listaPuestosSugeridos">
-                             <option value="Consejera/o Presidenta/e">
-                             <option value="Consejera/o Electoral">
-                             <option value="Secretaria/o del Consejo">
-                             <option value="Vocal Ejecutivo/a">
-                             <option value="Vocal Secretario/a">
-                             <option value="Vocal de Organización Electoral">
-                             <option value="Vocal del Registro Federal de Electores">
-                             <option value="Vocal de Capacitación Electoral y Educación Cívica">
-                             <option value="Director/a Ejecutivo/a">
-                             <option value="Titular de Unidad Técnica">
-                             <option value="Representante de Partido Político">
-                             <option value="Secretario/a Ejecutivo/a">
-                        </datalist>
+                        <select id="formAutPuesto" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+<option value="">Selecciona una opción...</option>
+<option value="Consejera/o Presidenta/e">Consejera/o Presidenta/e</option>
+<option value="Consejera/o Electoral">Consejera/o Electoral</option>
+<option value="Secretaria/o del Consejo">Secretaria/o del Consejo</option>
+<option value="Vocal Ejecutivo/a">Vocal Ejecutivo/a</option>
+<option value="Vocal Secretario/a">Vocal Secretario/a</option>
+<option value="Vocal de Organización Electoral">Vocal de Organización Electoral</option>
+<option value="Vocal del Registro Federal de Electores">Vocal del Registro Federal de Electores</option>
+<option value="Vocal de Capacitación Electoral y Educación Cívica">Vocal de Capacitación Electoral y Educación Cívica</option>
+<option value="Director/a Ejecutivo/a">Director/a Ejecutivo/a</option>
+<option value="Titular de Unidad Técnica">Titular de Unidad Técnica</option>
+<option value="Representante de Partido Político">Representante de Partido Político</option>
+<option value="Secretario/a Ejecutivo/a">Secretario/a Ejecutivo/a</option>
+</select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Calidad de Participación</label>
@@ -1846,15 +1846,28 @@
             }
         }
 
+        // Conserva valores históricos que no estén en la lista predefinida.
+        function seleccionarOpcionAutoridad(idCampo, valor) {
+            const campo = document.getElementById(idCampo);
+            campo.querySelectorAll('option[data-valor-historico="true"]').forEach(op => op.remove());
+            const texto = String(valor || '').trim();
+            if (texto && !Array.from(campo.options).some(op => op.value === texto)) {
+                const opcion = new Option(texto, texto);
+                opcion.dataset.valorHistorico = 'true';
+                campo.add(opcion);
+            }
+            campo.value = texto;
+        }
+
         function prepareNewAutoridad() {
             populateAutoridadesDynamicFilters();
             document.getElementById('autoridadModalTitle').innerHTML = `<i class="fas fa-landmark mr-2"></i>Registrar Nueva Autoridad Electoral`;
             document.getElementById('formAutId').value = "";
             document.getElementById('formAutNombre').value = "";
             document.getElementById('formAutInstitucion').value = "INE";
-            document.getElementById('formAutOrgano').value = "";
+            seleccionarOpcionAutoridad('formAutOrgano', "");
             document.getElementById('formAutAmbito').value = "Estatal";
-            document.getElementById('formAutPuesto').value = "";
+            seleccionarOpcionAutoridad('formAutPuesto', "");
             document.getElementById('formAutCalidad').value = "Voz y Voto";
             document.getElementById('formAutCondicion').value = "Propietario";
             document.getElementById('formAutPartido').value = "No aplica";
@@ -1884,9 +1897,9 @@
             document.getElementById('formAutId').value = aut.id;
             document.getElementById('formAutNombre').value = aut.nombreCompleto || "";
             document.getElementById('formAutInstitucion').value = aut.institucion || "INE";
-            document.getElementById('formAutOrgano').value = aut.organoColegiado || "";
+            seleccionarOpcionAutoridad('formAutOrgano', aut.organoColegiado);
             document.getElementById('formAutAmbito').value = aut.ambitoDistrito || "";
-            document.getElementById('formAutPuesto').value = aut.puestoCargo || "";
+            seleccionarOpcionAutoridad('formAutPuesto', aut.puestoCargo);
             document.getElementById('formAutCalidad').value = aut.calidadParticipacion || "Voz y Voto";
             document.getElementById('formAutCondicion').value = aut.condicion || "Propietario";
             document.getElementById('formAutPartido').value = aut.partidoOrganizacion || "No aplica";
