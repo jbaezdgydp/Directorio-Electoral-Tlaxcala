@@ -1488,11 +1488,19 @@ function cerrarModalNuevoUsuario() {
         async function fetchInitialData() {
             try { 
                 showLoading('Cargando base de datos...'); 
-                const response = await fetch(`${API_URL}?accion=obtenerTodo`, {
-                    method: 'GET',
-                    redirect: 'follow'
-                }); 
-                const data = await response.json();
+                const inicioDescarga = performance.now();
+
+const response = await fetch(`${API_URL}?accion=obtenerTodo`, {
+    method: 'GET',
+    redirect: 'follow'
+});
+const data = await response.json();
+
+console.log(
+    'DIAGNÓSTICO - Descarga y lectura JSON:',
+    ((performance.now() - inicioDescarga) / 1000).toFixed(3),
+    'segundos'
+);
 
                 if (data && data.error === 'Acción no válida') {
                     const fallbackRes = await fetch(`${API_URL}?accion=obtenerDatos`, {
@@ -1509,9 +1517,17 @@ function cerrarModalNuevoUsuario() {
                     appState.sedes = data.sedes || [];
                 }
 
-                populateAutoridadesDynamicFilters();
-                render(); 
-                renderAutoridades();
+                const inicioRenderizado = performance.now();
+
+populateAutoridadesDynamicFilters();
+render();
+renderAutoridades();
+
+console.log(
+    'DIAGNÓSTICO - Procesamiento y renderizado:',
+    ((performance.now() - inicioRenderizado) / 1000).toFixed(3),
+    'segundos'
+);
             } catch (error) { 
                 console.error("Error al obtener datos:", error); 
                 alert("No se pudo conectar con la base de datos. Asegúrate de eliminar archivos .gs duplicados en Apps Script y publicar una Nueva versión.");
