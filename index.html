@@ -85,7 +85,15 @@
                 
                 <div class="flex items-center space-x-2 sm:space-x-3 order-2 md:order-3 shrink-0">
                     <span id="userStatusBadge" class="hidden text-[11px] sm:text-xs bg-purple-900/90 text-purple-100 border border-purple-600 px-3 py-1 rounded-full max-w-[160px] sm:max-w-xs truncate"></span>
-                    
+                    <button
+                        id="btnAdministrarUsuarios"
+                        type="button"
+                        onclick="abrirPanelUsuarios()"
+                        class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-xs font-semibold transition"
+                        title="Administración de usuarios">
+                        <i class="fas fa-user-cog mr-1"></i>
+                        Administrar Usuarios
+                    </button>
                     <button id="btnLogout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-md text-xs font-semibold transition duration-150 shadow-sm hidden flex items-center" title="Cerrar sesión actual">
                         <i class="fas fa-door-open mr-1"></i> Salir
                     </button>
@@ -99,7 +107,57 @@
     </nav>
 
     <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        
+        <!-- PANEL DE ADMINISTRACIÓN DE USUARIOS -->
+<section id="panelAdministracionUsuarios" class="hidden bg-white rounded-lg shadow-md p-6 mb-6">
+    <button
+    type="button"
+    onclick="cerrarPanelUsuarios()"
+    class="mb-5 text-purple-700 hover:text-purple-900 font-semibold flex items-center">
+    <i class="fas fa-arrow-left mr-2"></i>
+    Volver al Directorio
+    </button>
+    <div class="flex flex-wrap justify-between items-center gap-3 mb-6">
+        <div>
+            <h2 class="text-2xl font-bold text-purple-800">
+                <i class="fas fa-users-cog mr-2"></i>
+                Administración de Usuarios
+            </h2>
+            <p class="text-sm text-gray-500 mt-1">
+                Gestión de cuentas y permisos de acceso.
+            </p>
+        </div>
+
+        <button type="button"
+            id="btnCrearUsuario"
+            class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md font-semibold">
+            <i class="fas fa-user-plus mr-2"></i>
+            Nuevo Usuario
+        </button>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full divide-y divide-gray-200">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="px-4 py-3 text-left text-sm">Usuario</th>
+                    <th class="px-4 py-3 text-left text-sm">Nombre</th>
+                    <th class="px-4 py-3 text-left text-sm">Rol</th>
+                    <th class="px-4 py-3 text-left text-sm">Estado</th>
+                    <th class="px-4 py-3 text-left text-sm">Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="tablaUsuarios" class="divide-y divide-gray-200">
+                <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+                        Pendiente de conectar con Google Apps Script.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</section>
+<!-- FIN DEL PANEL DE ADMINISTRACIÓN DE USUARIOS -->
         <!-- ========================================================= -->
         <!-- MÓDULO 1: DIRECTORIO DE ASPIRANTES                        -->
         <!-- ========================================================= -->
@@ -845,6 +903,7 @@
         }
 
         function switchModule(mod) {
+            document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
             appState.activeModule = mod;
             const modAsp = document.getElementById('moduleAspirantes');
             const modAut = document.getElementById('moduleAutoridades');
@@ -917,8 +976,78 @@
             return false;
         }
 
+        async function cargarUsuariosPanel() {
+    if (appState.role !== 'admin' || !appState.sessionToken) {
+        alert('Se requiere una sesión de Administrador.');
+        return;
+    }
+
+    const tabla = document.getElementById('tablaUsuarios');
+
+    tabla.innerHTML = `
+        <tr>
+            <td colspan="5" class="px-4 py-6 text-center text-gray-500">
+                Cargando usuarios...
+            </td>
+        </tr>
+    `;
+
+    try {
+        const respuesta = await postData({
+            accion: 'listarUsuarios',
+            sessionToken: appState.sessionToken
+        });
+
+        if (!respuesta || !respuesta.exito) {
+            throw new Error(
+                respuesta?.mensaje || 'No fue posible consultar los usuarios.'
+            );
+        }
+
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-4 py-6 text-center text-green-700">
+                    Consulta realizada correctamente.
+                    Usuarios encontrados: ${respuesta.usuarios.length}
+                </td>
+            </tr>
+        `;
+
+    } catch (error) {
+        tabla.innerHTML = `
+            <tr>
+                <td colspan="5" class="px-4 py-6 text-center text-red-600">
+                    Error al consultar los usuarios.
+                </td>
+            </tr>
+        `;
+
+        console.error('Error al cargar usuarios:', error);
+    }
+}
+
+        function abrirPanelUsuarios() {
+    if (appState.role !== 'admin') {
+        alert('Solo los administradores pueden acceder a esta sección.');
+        return;
+    }
+
+    document.getElementById('moduleAspirantes').classList.add('hidden');
+    document.getElementById('moduleAutoridades').classList.add('hidden');
+
+    document.getElementById('panelAdministracionUsuarios').classList.remove('hidden');
+    cargarUsuariosPanel();
+}
+        function cerrarPanelUsuarios() {
+            document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
+
+            switchModule('aspirantes');
+        }
+
         function logout() {
+            
             if (!confirm("¿Deseas cerrar tu sesión?")) return;
+            document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
             const token = appState.sessionToken;
             if (token) postData({ accion: 'cerrarSesion', sessionToken: token }).catch(() => {});
             appState.role = 'guest';
@@ -985,7 +1114,7 @@
 
         function applyPermissions() {
             const btnsEditor = ['btnNuevoRegistro', 'btnEditProfile', 'btnNewActivity', 'btnNewPublication', 'btnEditAutoridad', 'btnNuevaSedeSub'];
-            const btnsAdmin = ['btnDeleteProfile', 'btnDeleteAutoridad'];
+            const btnsAdmin = ['btnDeleteProfile', 'btnDeleteAutoridad', 'btnAdministrarUsuarios'];
             const badge = document.getElementById('userStatusBadge');
             const btnLogout = document.getElementById('btnLogout');
 
