@@ -1004,14 +1004,43 @@
             );
         }
 
-        tabla.innerHTML = `
-            <tr>
-                <td colspan="5" class="px-4 py-6 text-center text-green-700">
-                    Consulta realizada correctamente.
-                    Usuarios encontrados: ${respuesta.usuarios.length}
-                </td>
-            </tr>
-        `;
+        tabla.innerHTML = '';
+
+        if (respuesta.usuarios.length === 0) {
+            const fila = document.createElement('tr');
+            const celda = document.createElement('td');
+            celda.colSpan = 5;
+            celda.className = 'px-4 py-6 text-center text-gray-500';
+            celda.textContent = 'No hay usuarios registrados.';
+            fila.appendChild(celda);
+            tabla.appendChild(fila);
+            return;
+        }
+
+        respuesta.usuarios.forEach(usuario => {
+            const fila = document.createElement('tr');
+
+            const valores = [
+                usuario.usuario,
+                usuario.nombre,
+                usuario.rol === 'admin' ? 'Administrador' : 'Editor',
+                usuario.activo ? 'Activo' : 'Inactivo'
+            ];
+
+            valores.forEach(valor => {
+                const celda = document.createElement('td');
+                celda.className = 'px-4 py-3 text-sm text-gray-700';
+                celda.textContent = valor || '';
+                fila.appendChild(celda);
+            });
+
+            const acciones = document.createElement('td');
+            acciones.className = 'px-4 py-3 text-sm text-gray-400';
+            acciones.textContent = 'Pendiente';
+            fila.appendChild(acciones);
+
+            tabla.appendChild(fila);
+        });
 
     } catch (error) {
         tabla.innerHTML = `
