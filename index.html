@@ -309,6 +309,14 @@
                         <p class="text-sm text-gray-500">Aspirantes a cargos de elección popular en el Estado de Tlaxcala.</p>
                     </div>
                     <div class="flex items-center space-x-3">
+                        <button
+    type="button"
+    id="btnActualizarDatos"
+    onclick="actualizarDatosManualmente()"
+    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium transition duration-150 flex items-center text-sm">
+    <i class="fas fa-sync-alt mr-2"></i>
+    Actualizar datos
+</button>
                         <div class="text-sm font-medium text-purple-800 bg-purple-100 px-3 py-1 rounded-full" id="totalCount">0 registrados</div>
                         <button id="btnExportDashboard" onclick="exportarDashboardPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition duration-150 ease-in-out shadow text-sm flex items-center">
                             <i class="fas fa-file-pdf mr-2"></i> Exportar
@@ -1377,8 +1385,11 @@ function cerrarModalNuevoUsuario() {
 
         function logout() {
             
-            if (!confirm("¿Deseas cerrar tu sesión?")) return;
-            document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
+           if (!confirm("¿Deseas cerrar tu sesión?")) return;
+
+limpiarCacheDirectorio();
+
+document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
             const token = appState.sessionToken;
             if (token) postData({ accion: 'cerrarSesion', sessionToken: token }).catch(() => {});
             appState.role = 'guest';
@@ -1485,16 +1496,104 @@ function cerrarModalNuevoUsuario() {
             document.getElementById('loadingOverlay').classList.add('hidden'); 
         }
 
+        const CACHE_DIRECTORIO_CLAVE = 'directorio_tlaxcala_datos_v1';
+const CACHE_DIRECTORIO_DURACION = 5 * 60 * 1000;
+
+function obtenerDatosCacheDirectorio() {
+    try {
+        const guardado = sessionStorage.getItem(CACHE_DIRECTORIO_CLAVE);
+
+        if (!guardado) return null;
+
+        const cache = JSON.parse(guardado);
+
+        if (!cache || !cache.fecha || !cache.datos) {
+            return null;
+        }
+
+        if (Date.now() - cache.fecha > CACHE_DIRECTORIO_DURACION) {
+            sessionStorage.removeItem(CACHE_DIRECTORIO_CLAVE);
+            return null;
+        }
+
+        return cache.datos;
+
+    } catch (error) {
+        console.warn('No fue posible leer la caché:', error);
+        return null;
+    }
+}
+
+function guardarDatosCacheDirectorio(datos) {
+    try {
+        sessionStorage.setItem(
+            CACHE_DIRECTORIO_CLAVE,
+            JSON.stringify({
+                fecha: Date.now(),
+                datos: datos
+            })
+        );
+    } catch (error) {
+        console.warn('No fue posible guardar la caché:', error);
+    }
+}
+
+function limpiarCacheDirectorio() {
+    try {
+        sessionStorage.removeItem(CACHE_DIRECTORIO_CLAVE);
+    } catch (error) {
+        console.warn('No fue posible limpiar la caché:', error);
+    }
+}
+
+        async function actualizarDatosManualmente() {
+    const boton = document.getElementById('btnActualizarDatos');
+
+    if (boton) {
+        boton.disabled = true;
+        boton.textContent = 'Actualizando...';
+    }
+
+    try {
+        // Eliminar los datos temporales para forzar una nueva consulta.
+        limpiarCacheDirectorio();
+
+        // Descargar nuevamente la información desde Google Sheets.
+        await fetchInitialData();
+
+    } finally {
+        if (boton) {
+            boton.disabled = false;
+            boton.innerHTML = '<i class="fas fa-sync-alt mr-2"></i> Actualizar datos';
+        }
+    }
+}
+
         async function fetchInitialData() {
             try { 
                 showLoading('Cargando base de datos...'); 
-                const inicioDescarga = performance.now();
+              const inicioDescarga = performance.now();
 
-const response = await fetch(`${API_URL}?accion=obtenerTodo`, {
-    method: 'GET',
-    redirect: 'follow'
-});
-const data = await response.json();
+let data = obtenerDatosCacheDirectorio();
+
+if (data) {
+    console.log('DIAGNÓSTICO - Datos recuperados de caché.');
+} else {
+    const response = await fetch(`${API_URL}?accion=obtenerTodo`, {
+        method: 'GET',
+        redirect: 'follow'
+    });
+
+    if (!response.ok) {
+        throw new Error('Error HTTP: ' + response.status);
+    }
+
+    data = await response.json();
+
+    if (data && data.exito === true && Array.isArray(data.aspirantes)) {
+        guardarDatosCacheDirectorio(data);
+    }
+}
 
 console.log(
     'DIAGNÓSTICO - Descarga y lectura JSON:',
@@ -1536,21 +1635,56 @@ console.log(
             }
         }
 
-        async function postData(payload) { 
-            const response = await fetch(API_URL, { 
-                method: 'POST', 
-                redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' }, 
-                body: JSON.stringify(payload) 
-            }); 
-            const text = await response.text();
-            try {
-                return JSON.parse(text);
-            } catch (err) {
-                console.error("Respuesta no válida del servidor:", text);
-                throw new Error("El servidor devolvió un error en lugar de JSON.");
-            }
+        async function postData(payload) {
+    const response = await fetch(API_URL, {
+        method: 'POST',
+        redirect: 'follow',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+    });
+
+    const text = await response.text();
+
+    try {
+        const resultado = JSON.parse(text);
+
+        const accionesQueModificanDatos = [
+            'guardarAspirante',
+            'actualizarAspirante',
+            'eliminarAspirante',
+            'guardarActividad',
+            'actualizarActividad',
+            'guardarPublicacion',
+            'actualizarPublicacion',
+            'guardarAutoridad',
+            'actualizarAutoridad',
+            'eliminarAutoridad',
+            'guardarSede',
+            'actualizarSede',
+            'eliminarSede'
+        ];
+
+        if (
+            resultado &&
+            resultado.exito === true &&
+            payload &&
+            accionesQueModificanDatos.includes(payload.accion)
+        ) {
+            limpiarCacheDirectorio();
+            console.log('DIAGNÓSTICO - Caché limpiada después de guardar cambios.');
         }
+
+        return resultado;
+
+    } catch (err) {
+        if (err instanceof SyntaxError) {
+            console.error("Respuesta no válida del servidor:", text);
+            throw new Error("El servidor devolvió un error en lugar de JSON.");
+        }
+
+        throw err;
+    }
+}
 
         function limpiarFiltros() {
             document.getElementById('filterText').value = '';
