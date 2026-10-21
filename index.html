@@ -750,11 +750,10 @@
             </div>
             <div class="p-6 space-y-4 max-h-[75vh] overflow-y-auto">
                 <input type="hidden" id="formSedeIsEdit">
+                <input type="hidden" id="formSedeIsEdit">
+                <input type="hidden" id="formSedeId">
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Clave `ID_Sede` *</label>
-                        <input type="text" id="formSedeId" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. SEDE_INE_JL">
-                    </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Institución *</label>
                         <select id="formSedeInstitucion" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
@@ -762,7 +761,6 @@
                             <option value="ITE">ITE</option>
                         </select>
                     </div>
-                </div>
                 <div>
                     <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Nombre de la Sede *</label>
                     <input type="text" id="formSedeNombre" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm" placeholder="Ej. Junta Local Ejecutiva Tlaxcala">
@@ -2016,8 +2014,7 @@
         function prepareNewSede() {
             document.getElementById('sedeModalTitle').innerHTML = `<i class="fas fa-building mr-2"></i>Registrar Nueva Sede Electoral`;
             document.getElementById('formSedeIsEdit').value = "";
-            document.getElementById('formSedeId').value = "SEDE_";
-            document.getElementById('formSedeId').disabled = false;
+            document.getElementById('formSedeId').value = "";
             document.getElementById('formSedeInstitucion').value = "INE";
             document.getElementById('formSedeNombre').value = "";
             document.getElementById('formSedeMunicipio').value = "";
@@ -2034,7 +2031,6 @@
             document.getElementById('sedeModalTitle').innerHTML = `<i class="fas fa-edit mr-2"></i>Editar Sede Electoral`;
             document.getElementById('formSedeIsEdit').value = "true";
             document.getElementById('formSedeId').value = s.idSede;
-            document.getElementById('formSedeId').disabled = true;
             document.getElementById('formSedeInstitucion').value = s.institucion || "INE";
             document.getElementById('formSedeNombre').value = s.nombreSede || "";
             document.getElementById('formSedeMunicipio').value = s.cabeceraMunicipio || "";
@@ -2058,8 +2054,13 @@
                 horarioAtencion: document.getElementById('formSedeHorario').value.trim()
             };
 
-            if (!payload.idSede || !payload.nombreSede) {
-                alert("La clave ID_Sede y el Nombre de la Sede son obligatorios.");
+                if (!payload.nombreSede) {
+                alert("El Nombre de la Sede es obligatorio.");
+                return;
+                }
+
+                if (isEdit && !payload.idSede) {
+                alert("No se encontró el identificador de la sede que deseas editar.");
                 return;
             }
 
