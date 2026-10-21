@@ -232,6 +232,72 @@
     </div>
 </div>
 <!-- FIN MODAL NUEVO USUARIO -->
+<!-- MODAL PARA RESTABLECER CONTRASEÑA -->
+<div id="modalRestablecerPassword"
+     class="fixed inset-0 bg-black bg-opacity-60 hidden z-[310] flex items-center justify-center">
+
+    <div class="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 p-6">
+
+        <h3 class="text-xl font-bold text-purple-800 mb-4">
+            <i class="fas fa-key mr-2"></i>
+            Restablecer contraseña
+        </h3>
+
+        <p class="text-sm text-gray-600 mb-4">
+            Usuario:
+            <strong id="nombreUsuarioRestablecer"></strong>
+        </p>
+
+        <form id="formRestablecerPassword"
+      autocomplete="off"
+      onsubmit="guardarRestablecimientoPassword(event)">
+
+            <label for="passwordRestablecer"
+                   class="block text-sm font-semibold mb-1">
+                Nueva contraseña
+            </label>
+
+            <input id="passwordRestablecer"
+                   type="password"
+                   minlength="14"
+                   maxlength="200"
+                   autocomplete="new-password"
+                   required
+                   class="w-full border rounded-md px-3 py-2 mb-4"
+                   placeholder="Mínimo 14 caracteres">
+
+            <label for="passwordRestablecerConfirmar"
+                   class="block text-sm font-semibold mb-1">
+                Confirmar nueva contraseña
+            </label>
+
+            <input id="passwordRestablecerConfirmar"
+                   type="password"
+                   minlength="14"
+                   maxlength="200"
+                   autocomplete="new-password"
+                   required
+                   class="w-full border rounded-md px-3 py-2 mb-6"
+                   placeholder="Repite la contraseña">
+
+            <div class="flex justify-end gap-3">
+
+                <button type="button"
+                        onclick="cerrarRestablecerPassword()"
+                        class="px-4 py-2 border rounded-md text-gray-700">
+                    Cancelar
+                </button>
+
+                <button type="submit"
+                        class="bg-purple-700 hover:bg-purple-800 text-white px-4 py-2 rounded-md font-semibold">
+                    Guardar contraseña
+                </button>
+
+            </div>
+        </form>
+    </div>
+</div>
+<!-- FIN MODAL RESTABLECER CONTRASEÑA -->
         <!-- ========================================================= -->
         <!-- MÓDULO 1: DIRECTORIO DE ASPIRANTES                        -->
         <!-- ========================================================= -->
@@ -1110,7 +1176,19 @@
 
             const acciones = document.createElement('td');
             acciones.className = 'px-4 py-3 text-sm text-gray-400';
-            acciones.textContent = 'Pendiente';
+            const botonRestablecer = document.createElement('button');
+
+botonRestablecer.type = 'button';
+botonRestablecer.className =
+    'bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md text-xs font-semibold';
+
+botonRestablecer.textContent = 'Restablecer contraseña';
+
+botonRestablecer.addEventListener('click', () => {
+    abrirRestablecerPassword(usuario.usuario);
+});
+
+acciones.appendChild(botonRestablecer);
             fila.appendChild(acciones);
 
             tabla.appendChild(fila);
@@ -1179,6 +1257,89 @@
         botonGuardar.disabled = false;
         botonGuardar.textContent = 'Crear Usuario';
     }
+}
+
+let usuarioSeleccionadoRestablecer = null;
+async function guardarRestablecimientoPassword(event) {
+    event.preventDefault();
+
+    if (appState.role !== 'admin' || !appState.sessionToken) {
+        alert('Solo los administradores pueden restablecer contraseñas.');
+        return;
+    }
+
+    if (!usuarioSeleccionadoRestablecer) {
+        alert('No se ha seleccionado un usuario.');
+        return;
+    }
+
+    const formulario = document.getElementById('formRestablecerPassword');
+
+    if (!formulario.reportValidity()) return;
+
+    const password = document.getElementById('passwordRestablecer').value;
+    const confirmacion = document.getElementById('passwordRestablecerConfirmar').value;
+
+    if (password !== confirmacion) {
+        alert('Las contraseñas no coinciden.');
+        return;
+    }
+
+    const botonGuardar = formulario.querySelector('button[type="submit"]');
+
+    botonGuardar.disabled = true;
+    botonGuardar.textContent = 'Guardando...';
+
+    try {
+        const respuesta = await postData({
+            accion: 'restablecerPasswordUsuario',
+            sessionToken: appState.sessionToken,
+            usuarioObjetivo: {
+                usuario: usuarioSeleccionadoRestablecer,
+                password: password
+            }
+        });
+
+        if (!respuesta || !respuesta.exito) {
+            throw new Error(
+                respuesta?.mensaje || 'No fue posible restablecer la contraseña.'
+            );
+        }
+
+        cerrarRestablecerPassword();
+
+        alert('Contraseña restablecida correctamente.');
+
+    } catch (error) {
+        alert('Error al restablecer contraseña: ' + error.message);
+        console.error('Error al restablecer contraseña:', error);
+
+    } finally {
+        botonGuardar.disabled = false;
+        botonGuardar.textContent = 'Guardar contraseña';
+    }
+}
+function abrirRestablecerPassword(usuario) {
+    if (appState.role !== 'admin' || !appState.sessionToken) {
+        alert('Solo los administradores pueden restablecer contraseñas.');
+        return;
+    }
+
+    usuarioSeleccionadoRestablecer = usuario;
+
+    document.getElementById('formRestablecerPassword').reset();
+
+    document.getElementById('nombreUsuarioRestablecer').textContent = usuario;
+
+    document.getElementById('modalRestablecerPassword').classList.remove('hidden');
+}
+
+function cerrarRestablecerPassword() {
+    document.getElementById('modalRestablecerPassword').classList.add('hidden');
+
+    document.getElementById('formRestablecerPassword').reset();
+
+    usuarioSeleccionadoRestablecer = null;
 }
 
         function abrirModalNuevoUsuario() {
