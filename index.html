@@ -1707,6 +1707,23 @@ console.log(
 
     try {
         const resultado = JSON.parse(text);
+        // Detectar sesiones vencidas, desactivadas o inválidas.
+        if (resultado && resultado.codigo === 'SESION_INVALIDA') {
+            alert(
+                'Tu sesión ya no es válida o tu cuenta fue desactivada. ' +
+                'Debes iniciar sesión nuevamente.'
+            );
+
+            // Evitar que la sesión anterior siga autorizando acciones.
+            appState.sessionToken = null;
+appState.role = 'guest';
+appState.userName = '';
+appState.isReadOnly = true;
+            // Recargar la interfaz para solicitar nuevamente el acceso.
+            window.location.reload();
+
+            return resultado;
+        }
 
         const accionesQueModificanDatos = [
             'guardarAspirante',
