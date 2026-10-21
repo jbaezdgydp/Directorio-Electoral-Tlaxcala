@@ -1197,6 +1197,25 @@ botonRestablecer.addEventListener('click', () => {
 });
 
 acciones.appendChild(botonRestablecer);
+const botonEstado = document.createElement('button');
+
+botonEstado.type = 'button';
+botonEstado.className = usuario.activo
+    ? 'bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-md text-xs font-semibold ml-2'
+    : 'bg-green-600 hover:bg-green-700 text-white px-3 py-2 rounded-md text-xs font-semibold ml-2';
+
+botonEstado.textContent = usuario.activo
+    ? 'Desactivar'
+    : 'Activar';
+
+botonEstado.addEventListener('click', () => {
+    cambiarEstadoUsuarioDesdePanel(
+        usuario.usuario,
+        !usuario.activo
+    );
+});
+
+acciones.appendChild(botonEstado);
             fila.appendChild(acciones);
 
             tabla.appendChild(fila);
@@ -1212,6 +1231,47 @@ acciones.appendChild(botonRestablecer);
         `;
 
         console.error('Error al cargar usuarios:', error);
+    }
+}
+
+async function cambiarEstadoUsuarioDesdePanel(usuarioObjetivo, nuevoEstado) {
+    if (appState.role !== 'admin' || !appState.sessionToken) {
+        alert('Se requiere una sesión de Administrador.');
+        return;
+    }
+
+    const usuario = String(usuarioObjetivo || '').trim();
+    const activar = nuevoEstado === true;
+
+    const operacion = activar ? 'activar' : 'desactivar';
+
+    const confirmado = confirm(
+        `¿Estás seguro de que deseas ${operacion} al usuario "${usuario}"?`
+    );
+
+    if (!confirmado) return;
+
+    try {
+        const respuesta = await postData({
+            accion: 'cambiarEstadoUsuario',
+            sessionToken: appState.sessionToken,
+            usuarioObjetivo: usuario,
+            activo: activar
+        });
+
+        if (!respuesta || !respuesta.exito) {
+            throw new Error(
+                respuesta?.mensaje || 'No fue posible cambiar el estado del usuario.'
+            );
+        }
+
+        alert(respuesta.mensaje || 'Estado actualizado correctamente.');
+
+        await cargarUsuariosPanel();
+
+    } catch (error) {
+        console.error('Error al cambiar estado del usuario:', error);
+        alert(error.message || 'Ocurrió un error al actualizar el usuario.');
     }
 }
 
