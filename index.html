@@ -68,13 +68,15 @@
     <!-- NAVEGACIÓN FIJA SUPERIOR -->
     <nav class="bg-purple-800 text-white shadow-md sticky top-0 z-40">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap items-center justify-between min-h-[64px] py-2 gap-2">
-                <div class="flex items-center cursor-pointer select-none shrink-0" onclick="switchModule(appState.activeModule)">
+            <div class="flex flex-wrap items-center justify-between min-h-[64px] py-2.5 gap-2">
+                <!-- Título / Logo -->
+                <div class="flex items-center cursor-pointer select-none" onclick="switchModule(appState.activeModule)">
                     <i class="fas fa-clipboard-list text-xl sm:text-2xl mr-2.5 text-amber-300"></i>
                     <span class="font-bold text-base sm:text-xl tracking-tight">Directorio Electoral Tlaxcala</span>
                 </div>
 
-                <div class="flex items-center space-x-2 order-3 md:order-2 w-full md:w-auto justify-center py-1 md:py-0">
+                <!-- Pestañas de Módulos -->
+                <div class="flex flex-wrap items-center gap-2 order-3 md:order-2 w-full md:w-auto justify-center py-1 md:py-0">
                     <button id="tabBtnAspirantes" onclick="switchModule('aspirantes')" class="px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400">
                         <i class="fas fa-users mr-2"></i> Aspirantes
                     </button>
@@ -83,22 +85,25 @@
                     </button>
                 </div>
                 
-                <div class="flex items-center space-x-2 sm:space-x-3 order-2 md:order-3 shrink-0">
-                    <span id="userStatusBadge" class="hidden text-[11px] sm:text-xs bg-purple-900/90 text-purple-100 border border-purple-600 px-3 py-1 rounded-full max-w-[160px] sm:max-w-xs truncate"></span>
+                <!-- Controles de Usuario y Botón Nuevo Registro -->
+                <div class="flex flex-wrap items-center justify-center sm:justify-end gap-2 order-2 md:order-3 w-full md:w-auto">
+                    <span id="userStatusBadge" class="hidden text-[11px] sm:text-xs bg-purple-900/90 text-purple-100 border border-purple-600 px-3 py-1 rounded-full max-w-[180px] sm:max-w-xs truncate"></span>
+                    
                     <button
                         id="btnAdministrarUsuarios"
                         type="button"
                         onclick="abrirPanelUsuarios()"
-                        class="hidden bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-2 rounded-md text-xs font-semibold transition"
+                        class="hidden bg-purple-600 hover:bg-purple-500 text-white ring-1 ring-purple-400 px-3 py-1.5 rounded-lg text-xs font-bold transition shadow-sm flex items-center"
                         title="Administración de usuarios">
-                        <i class="fas fa-user-cog mr-1"></i>
+                        <i class="fas fa-user-cog mr-1.5"></i>
                         Administrar Usuarios
                     </button>
-                    <button id="btnLogout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-md text-xs font-semibold transition duration-150 shadow-sm hidden flex items-center" title="Cerrar sesión actual">
+
+                    <button id="btnLogout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-2.5 py-1.5 rounded-lg text-xs font-semibold transition duration-150 shadow-sm hidden flex items-center" title="Cerrar sesión actual">
                         <i class="fas fa-door-open mr-1"></i> Salir
                     </button>
 
-                    <button id="btnNuevoRegistro" onclick="handleMainNewAction()" class="bg-fuchsia-600 hover:bg-fuchsia-500 px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-bold transition duration-150 ease-in-out shadow text-xs sm:text-sm hidden whitespace-nowrap flex items-center">
+                    <button id="btnNuevoRegistro" onclick="handleMainNewAction()" class="bg-fuchsia-600 hover:bg-fuchsia-500 w-full sm:w-auto justify-center px-3 sm:px-4 py-2 sm:py-1.5 rounded-lg font-bold transition duration-150 ease-in-out shadow text-xs sm:text-sm hidden whitespace-nowrap flex items-center">
                         <i class="fas fa-plus mr-1.5"></i> <span id="btnNuevoRegistroText">Nuevo Aspirante</span>
                     </button>
                 </div>
@@ -309,13 +314,13 @@
                     </div>
                     <div class="flex items-center space-x-3">
                         <button
-    type="button"
-    id="btnActualizarDatos"
-    onclick="actualizarDatosManualmente()"
-    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-md font-medium transition duration-150 flex items-center text-sm">
-    <i class="fas fa-sync-alt mr-2"></i>
-    Actualizar datos
-</button>
+                            type="button"
+                            id="btnActualizarDatos"
+                            onclick="actualizarDatosManualmente()"
+                            class="bg-purple-600 hover:bg-purple-500 text-white ring-1 ring-purple-400 px-3 py-2 rounded-lg font-bold transition duration-150 shadow-sm flex items-center text-sm">
+                            <i class="fas fa-sync-alt mr-2"></i>
+                            Actualizar datos
+                        </button>
                         <div class="text-sm font-medium text-purple-800 bg-purple-100 px-3 py-1 rounded-full" id="totalCount">0 registrados</div>
                         <button id="btnExportDashboard" onclick="exportarDashboardPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition duration-150 ease-in-out shadow text-sm flex items-center">
                             <i class="fas fa-file-pdf mr-2"></i> Exportar
