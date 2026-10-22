@@ -212,7 +212,6 @@
             <select id="nuevoUsuarioRol"
                     class="w-full border rounded-md px-3 py-2 mb-6">
                 <option value="editor">Editor</option>
-                <option value="admin">Administrador</option>
             </select>
 
             <div class="flex justify-end gap-3">
@@ -1007,7 +1006,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbxzWqW62vY_CpA5FJBs7uaqCMx5Y6dK4cGgafRTn8jykJRYkCJ-qb1mJyfAzFHEssPR/exec";
+        const API_URL = "https://script.google.com/macros/s/AKfycbwHzSIgdN6myRK5z6dqoFB1jxvf2rjsligsH0im0GTRcWUE_nzzmD0YK_loNfY2LjkT/exec";
 
         let appState = { 
             activeModule: 'aspirantes',
@@ -1029,6 +1028,7 @@
         let currentBase64Image = null; 
         let currentAutBase64Image = null;
         let loginRoleTarget = 'admin';
+        let ultimaSolicitudAcceso = 0;
 
         const MUNICIPIOS = ["Acuamanala de Miguel Hidalgo", "Amaxac de Guerrero", "Apetatitlán de Antonio Carvajal", "Apizaco", "Atlangatepec", "Atltzayanca", "Benito Juárez", "Calpulalpan", "Chiautempan", "Contla de Juan Cuamatzi", "Cuapiaxtla", "Cuaxomulco", "El Carmen Tequexquitla", "Emiliano Zapata", "Españita", "Huamantla", "Hueyotlipan", "Ixtacuixtla de Mariano Matamoros", "Ixtenco", "La Magdalena Tlaltelulco", "Lázaro Cárdenas", "Mazatecochco de José María Morelos", "Muñoz de Domingo Arenas", "Nanacamilpa de Mariano Arista", "Natívitas", "Panotla", "Papalotla de Xicohténcatl", "San Damián Texóloc", "San Francisco Tetlanohcan", "San Jerónimo Zacualpan", "San José Teacalco", "San Juan Huactzinco", "San Lorenzo Axocomanitla", "San Lucas Tecopilco", "San Pablo del Monte", "Sanctórum de Lázaro Cárdenas", "Santa Ana Nopalucan", "Santa Apolonia Teacalco", "Santa Catarina Ayometla", "Santa Cruz Quilehtla", "Santa Cruz Tlaxcala", "Santa Isabel Xiloxoxtla", "Tenancingo", "Teolocholco", "Tepetitla de Lardizábal", "Tepeyanco", "Terrenate", "Tetla de la Solidaridad", "Tetlatlahuca", "Tlaxcala", "Tlaxco", "Tocatlán", "Totolac", "Tzompantepec", "Xaloztoc", "Xaltocan", "Xicohtzinco", "Yauhquemehcan", "Zacatelco", "Ziltlaltépec de Trinidad Sánchez Santos"];
         const FED_DISTRITOS = ["I", "II", "III"];
@@ -1291,7 +1291,7 @@ async function cambiarEstadoUsuarioDesdePanel(usuarioObjetivo, nuevoEstado) {
         usuario: document.getElementById('nuevoUsuarioUsername').value.trim(),
         nombre: document.getElementById('nuevoUsuarioNombre').value.trim(),
         password: document.getElementById('nuevoUsuarioPassword').value,
-        rol: document.getElementById('nuevoUsuarioRol').value
+        rol: 'editor'
     };
 
     const botonGuardar = formulario.querySelector('button[type="submit"]');
@@ -1443,29 +1443,45 @@ function cerrarModalNuevoUsuario() {
             switchModule('aspirantes');
         }
 
-        function logout() {
-            
-           if (!confirm("¿Deseas cerrar tu sesión?")) return;
+        async function logout() {
+            if (!confirm("¿Deseas cerrar tu sesión?")) return;
 
-limpiarCacheDirectorio();
-
-document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
+            ++ultimaSolicitudAcceso; // Descartar cualquier acceso que siga pendiente.
+            hideLoading();
             const token = appState.sessionToken;
-            if (token) postData({ accion: 'cerrarSesion', sessionToken: token }).catch(() => {});
-            appState.role = 'guest';
-            appState.userName = 'Invitado';
-            appState.sessionToken = null;
-            appState.isReadOnly = true;
-            appState.selectedAspiranteId = null;
-            appState.selectedAutoridadId = null;
-            document.getElementById('adminPasswordInput').value = "";
-            document.getElementById('loginUsernameInput').value = "";
-            document.getElementById('loginOverlay').classList.remove('hidden');
-            applyPermissions();
-            goHome();
+            // Revocar en el servidor antes de informar que el cierre fue confirmado.
+            // El acceso local se elimina siempre, incluso ante un fallo de red.
+            let cierreConfirmado = !token;
+            try {
+                if (token) {
+                    const resultado = await postData({ accion: 'cerrarSesion', sessionToken: token });
+                    cierreConfirmado = Boolean(resultado && resultado.exito === true);
+                }
+            } catch (error) {
+                console.warn('No fue posible confirmar la revocación de la sesión:', error);
+            } finally {
+                limpiarCacheDirectorio();
+                document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
+                appState.role = 'guest';
+                appState.userName = 'Invitado';
+                appState.sessionToken = null;
+                appState.isReadOnly = true;
+                appState.selectedAspiranteId = null;
+                appState.selectedAutoridadId = null;
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('loginUsernameInput').value = '';
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                applyPermissions();
+                goHome();
+            }
+            if (!cierreConfirmado) {
+                alert('Se cerró el acceso en este navegador, pero no fue posible confirmar el cierre de la sesión en el servidor. El token podría seguir vigente hasta su vencimiento.');
+            }
         }
 
         function enterAsGuest() {
+            ++ultimaSolicitudAcceso;
+            hideLoading();
             appState.isReadOnly = true;
             appState.role = 'guest';
             appState.userName = 'Invitado';
@@ -1476,6 +1492,8 @@ document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
         }
 
         function promptLogin(role) {
+            ++ultimaSolicitudAcceso;
+            hideLoading();
             loginRoleTarget = role;
             document.getElementById('loginUsernameInput').value = "";
             document.getElementById('adminPasswordInput').value = "";
@@ -1489,9 +1507,20 @@ document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
             const usuario = document.getElementById('loginUsernameInput').value.trim();
             const passInput = document.getElementById('adminPasswordInput').value;
             if (!usuario || !passInput) { alert('Ingresa usuario y contraseña.'); return; }
+            const rolSolicitado = loginRoleTarget;
+            const numeroSolicitud = ++ultimaSolicitudAcceso;
             showLoading('Verificando credenciales...');
             try {
-                const res = await postData({ accion: 'verificarContrasena', usuario, password: passInput, rol: loginRoleTarget });
+                const res = await postData({ accion: 'verificarContrasena', usuario, password: passInput, rol: rolSolicitado });
+                // Solo la última solicitud puede modificar la sesión o mostrar errores.
+                if (numeroSolicitud !== ultimaSolicitudAcceso) {
+                    // Si una solicitud descartada generó un token, revocarlo sin alterar la sesión actual.
+                    if (res && res.exito && res.sessionToken && res.sessionToken !== appState.sessionToken) {
+                        postData({ accion: 'cerrarSesion', sessionToken: res.sessionToken })
+                            .catch(error => console.warn('No se pudo revocar el acceso descartado:', error));
+                    }
+                    return;
+                }
                 if (res && res.exito && res.sessionToken) {
                     appState.isReadOnly = false;
                     appState.role = res.rol;
@@ -1502,16 +1531,25 @@ document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
                     document.getElementById('adminPasswordInput').value = '';
                     applyPermissions();
                     fetchInitialData();
-                    setTimeout(() => alert(`¡Bienvenido(a), ${appState.userName}!`), 200);
+                    const nombreBienvenida = appState.userName;
+                    setTimeout(() => {
+                        if (numeroSolicitud === ultimaSolicitudAcceso && appState.sessionToken === res.sessionToken) {
+                            alert(`¡Bienvenido(a), ${nombreBienvenida}!`);
+                        }
+                    }, 200);
                 } else {
                     alert(res && res.mensaje ? res.mensaje : 'Usuario o contraseña incorrectos.');
                     document.getElementById('adminPasswordInput').value = '';
                     document.getElementById('adminPasswordInput').focus();
                 }
             } catch (error) {
-                alert('No fue posible verificar las credenciales. Intenta nuevamente.');
-                console.error(error);
-            } finally { hideLoading(); }
+                if (numeroSolicitud === ultimaSolicitudAcceso) {
+                    alert('No fue posible verificar las credenciales. Intenta nuevamente.');
+                    console.error(error);
+                }
+            } finally {
+                if (numeroSolicitud === ultimaSolicitudAcceso) hideLoading();
+            }
         }
 
         function applyPermissions() {
@@ -1696,6 +1734,13 @@ console.log(
         }
 
         async function postData(payload) {
+    if (payload && payload.accion !== 'verificarContrasena' &&
+        payload.accion !== 'cerrarSesion' && !appState.sessionToken) {
+        return { exito: false, codigo: 'SESION_INVALIDA',
+                 mensaje: 'Debes iniciar sesión nuevamente.' };
+    }
+    // Vincular cada solicitud a la sesión activa al momento de enviarla.
+    const tokenSolicitud = payload && payload.sessionToken ? payload.sessionToken : null;
     const response = await fetch(API_URL, {
         method: 'POST',
         redirect: 'follow',
@@ -1707,21 +1752,36 @@ console.log(
 
     try {
         const resultado = JSON.parse(text);
-        // Detectar sesiones vencidas, desactivadas o inválidas.
+        // Una respuesta tardía de otra sesión no debe modificar el estado actual.
+        // El cierre de sesión y el inicio de sesión no usan esta comprobación.
+        if (tokenSolicitud && tokenSolicitud !== appState.sessionToken) {
+            return { exito: false, codigo: 'RESPUESTA_SESION_ANTERIOR',
+                     mensaje: 'La respuesta pertenece a una sesión anterior. Vuelve a intentar la operación.' };
+        }
+        // Un token inválido obliga a volver al acceso sin recargar la página.
         if (resultado && resultado.codigo === 'SESION_INVALIDA') {
-            alert(
-                'Tu sesión ya no es válida o tu cuenta fue desactivada. ' +
-                'Debes iniciar sesión nuevamente.'
-            );
-
-            // Evitar que la sesión anterior siga autorizando acciones.
-            appState.sessionToken = null;
-appState.role = 'guest';
-appState.userName = '';
-appState.isReadOnly = true;
-            // Recargar la interfaz para solicitar nuevamente el acceso.
-            window.location.reload();
-
+            if (appState.sessionToken) {
+                appState.sessionToken = null;
+                appState.role = 'guest';
+                appState.userName = 'Invitado';
+                appState.isReadOnly = true;
+                appState.selectedAspiranteId = null;
+                appState.selectedAutoridadId = null;
+                limpiarCacheDirectorio();
+                document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
+                ['passwordModal', 'addModal', 'activityModal', 'publicationModal',
+                 'autoridadModal', 'sedeModal'].forEach(id => {
+                    const modal = document.getElementById(id);
+                    if (modal) modal.classList.add('hidden');
+                });
+                document.getElementById('adminPasswordInput').value = '';
+                document.getElementById('loginUsernameInput').value = '';
+                document.getElementById('loginOverlay').classList.remove('hidden');
+                applyPermissions();
+                goHome();
+                alert('Tu sesión venció o dejó de ser válida. Inicia sesión nuevamente. ' +
+                      'Los cambios que no se guardaron deberán capturarse de nuevo.');
+            }
             return resultado;
         }
 
@@ -1850,6 +1910,15 @@ appState.isReadOnly = true;
             renderDetail(); 
         }
 
+        function escaparHTML(valor) {
+            return String(valor ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
         function render() {
             const grid = document.getElementById('profilesGrid'); 
             const filterText = document.getElementById('filterText') ? document.getElementById('filterText').value.toLowerCase() : '';
@@ -1889,27 +1958,52 @@ appState.isReadOnly = true;
 
             let htmlContent = '';
             filteredAspirantes.forEach(asp => {
-                let avatarHtml = `<div class="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xl flex-shrink-0">${(asp.nombre || '?').charAt(0).toUpperCase()}</div>`;
-                if (asp.foto && asp.foto.trim() !== '') { 
-                    avatarHtml = `<img src="${asp.foto}" class="h-14 w-14 rounded-xl object-cover bg-gray-100 border border-gray-200 flex-shrink-0">`; 
+                const nombreSeguro = escaparHTML(asp.nombre);
+                const partidoSeguro = escaparHTML(asp.partido || 'N/A');
+                const etapaSegura = escaparHTML(asp.etapa);
+                const cargoSeguro = escaparHTML(asp.cargo);
+                const telefonoSeguro = escaparHTML(asp.telefono);
+                const inicialSegura = escaparHTML(
+                    String(asp.nombre || '?').charAt(0).toUpperCase()
+                );
+                let avatarHtml = `<div class="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xl flex-shrink-0">${inicialSegura}</div>`;
+                if (asp.foto && String(asp.foto).trim() !== '') {
+                let fotoSegura = null;
+
+                try {
+                    const urlFoto = new URL(String(asp.foto).trim());
+
+                    if (['https:', 'http:'].includes(urlFoto.protocol) &&
+                        urlFoto.hostname &&
+                        !urlFoto.username &&
+                        !urlFoto.password) {
+                        fotoSegura = escaparHTML(urlFoto.href);
+                    }
+                } catch (error) {
+                    fotoSegura = null;
                 }
 
+                if (fotoSegura) {
+                    avatarHtml = `<img src="${fotoSegura}" class="h-14 w-14 rounded-xl object-cover bg-gray-100 border border-gray-200 flex-shrink-0" alt="Fotografía del aspirante">`;
+                }
+            }
+
                 htmlContent += `
-                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-200 overflow-hidden cursor-pointer break-inside-avoid" onclick="viewProfile('${asp.id}')">
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-200 overflow-hidden cursor-pointer break-inside-avoid" data-aspirante-id="${escaparHTML(asp.id)}">
                     <div class="p-5">
                         <div class="flex items-start space-x-4 mb-3">
                             ${avatarHtml}
                             <div>
                                 <div class="flex flex-wrap gap-1 mb-1">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-100 uppercase">${asp.partido || 'N/A'}</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${asp.etapa}</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-purple-50 text-purple-700 border border-purple-100 uppercase">${partidoSeguro}</span>
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${etapaSegura}</span>
                                 </div>
-                                <h3 class="text-lg font-bold text-gray-900 leading-tight">${asp.nombre}</h3>
+                                <h3 class="text-lg font-bold text-gray-900 leading-tight">${nombreSeguro}</h3>
                             </div>
                         </div>
                         <div class="text-sm text-gray-600 mb-3">
-                            <p class="font-medium text-gray-800"><i class="fas fa-bullseye w-4 mr-1 text-purple-500"></i> ${asp.cargo}</p>
-                            ${asp.telefono ? `<p class="mt-1"><i class="fas fa-phone w-4 mr-1 text-gray-400"></i> ${asp.telefono}</p>` : ''}
+                            <p class="font-medium text-gray-800"><i class="fas fa-bullseye w-4 mr-1 text-purple-500"></i> ${cargoSeguro}</p>
+                            ${asp.telefono ? `<p class="mt-1"><i class="fas fa-phone w-4 mr-1 text-gray-400"></i> ${telefonoSeguro}</p>` : ''}
                         </div>
                         <div class="flex justify-between items-center text-xs text-gray-500 pt-3 border-t border-gray-100">
                             <span><i class="far fa-calendar-check mr-1"></i> ${asp.actividades ? asp.actividades.length : 0} Acts.</span>
@@ -1920,6 +2014,23 @@ appState.isReadOnly = true;
             });
             
             grid.innerHTML = htmlContent;
+            grid.onclick = function(event) {
+    const elemento = event.target;
+
+    if (!(elemento instanceof Element)) {
+        return;
+    }
+
+    const tarjeta = elemento.closest('[data-aspirante-id]');
+
+    if (tarjeta && grid.contains(tarjeta)) {
+        const idAspirante = tarjeta.dataset.aspiranteId;
+
+        if (idAspirante) {
+            viewProfile(idAspirante);
+        }
+    }
+};
         }
 
         function renderDetail() {
@@ -1927,8 +2038,28 @@ appState.isReadOnly = true;
             if (!asp) return;
 
             let bigAvatarHtml = `<div class="h-32 w-32 rounded-lg bg-gray-200 flex items-center justify-center text-gray-500 text-5xl font-bold mb-4 md:mb-0 md:mr-6 flex-shrink-0 shadow-sm border border-gray-300"><i class="fas fa-user"></i></div>`;
-            if (asp.foto && asp.foto.trim() !== '') {
-                bigAvatarHtml = `<div class="h-40 w-32 rounded-lg bg-gray-100 flex-shrink-0 border border-gray-300 shadow-md mb-4 md:mb-0 md:mr-6 flex items-center justify-center overflow-hidden"><img src="${asp.foto}" class="h-full w-full object-contain"></div>`;
+
+            if (asp.foto && String(asp.foto).trim() !== '') {
+                let fotoAspiranteSegura = null;
+
+                try {
+                    const urlFoto = new URL(String(asp.foto).trim());
+
+                    if (
+                        ['https:', 'http:'].includes(urlFoto.protocol) &&
+                        urlFoto.hostname &&
+                        !urlFoto.username &&
+                        !urlFoto.password
+                    ) {
+                        fotoAspiranteSegura = escaparHTML(urlFoto.href);
+                    }
+                } catch (error) {
+                    fotoAspiranteSegura = null;
+                }
+
+                if (fotoAspiranteSegura) {
+                    bigAvatarHtml = `<div class="h-40 w-32 rounded-lg bg-gray-100 flex-shrink-0 border border-gray-300 shadow-md mb-4 md:mb-0 md:mr-6 flex items-center justify-center overflow-hidden"><img src="${fotoAspiranteSegura}" class="h-full w-full object-contain" alt="Fotografía del aspirante"></div>`;
+                }
             }
             document.getElementById('detailAvatarContainer').innerHTML = bigAvatarHtml;
 
@@ -1937,7 +2068,11 @@ appState.isReadOnly = true;
             document.getElementById('detailEtapa').innerText = asp.etapa; 
             document.getElementById('detailPartido').innerText = asp.partido || 'Sin partido'; 
             document.getElementById('detailBio').innerText = asp.bio || 'Sin biografía.'; 
-            document.getElementById('detailTelefono').innerHTML = `<i class="fas fa-phone mr-2 text-gray-400"></i> ${asp.telefono || 'No registrado'}`; 
+            const telefonoDetalle = document.getElementById('detailTelefono');
+                telefonoDetalle.innerHTML = '<i class="fas fa-phone mr-2 text-gray-400"></i> ';
+                telefonoDetalle.appendChild(
+                document.createTextNode(asp.telefono || 'No registrado')
+                );
             document.getElementById('detailObservaciones').innerText = asp.observaciones || 'Ninguna.';
             
             const modificadoPorEl = document.getElementById('detailModificadoPor');
@@ -1946,11 +2081,52 @@ appState.isReadOnly = true;
             }
 
             const divRedes = document.getElementById('detailRedes');
-            if (asp.redesSociales && asp.redesSociales.trim() !== '') {
-                divRedes.innerHTML = `<a href="${asp.redesSociales.startsWith('http') ? asp.redesSociales : 'https://' + asp.redesSociales}" target="_blank" class="text-blue-600 hover:underline"><i class="fas fa-link mr-2 text-gray-400"></i> ${asp.redesSociales}</a>`;
-            } else {
-                divRedes.innerHTML = `<span class="text-gray-400 italic">No registradas</span>`;
-            }
+divRedes.replaceChildren();
+
+const redSocial = String(asp.redesSociales || '').trim();
+
+if (redSocial) {
+    let urlSegura = null;
+
+    try {
+        const url = new URL(
+            /^https?:\/\//i.test(redSocial)
+                ? redSocial
+                : 'https://' + redSocial
+        );
+
+        if (['http:', 'https:'].includes(url.protocol) &&
+            url.hostname &&
+            !url.username &&
+            !url.password) {
+            urlSegura = url.href;
+        }
+    } catch (error) {
+        urlSegura = null;
+    }
+
+    if (urlSegura) {
+        const enlace = document.createElement('a');
+        enlace.href = urlSegura;
+        enlace.target = '_blank';
+        enlace.rel = 'noopener noreferrer';
+        enlace.className = 'text-blue-600 hover:underline';
+
+        const icono = document.createElement('i');
+        icono.className = 'fas fa-link mr-2 text-gray-400';
+
+        enlace.appendChild(icono);
+        enlace.appendChild(document.createTextNode(' ' + redSocial));
+        divRedes.appendChild(enlace);
+    } else {
+        divRedes.textContent = redSocial;
+    }
+} else {
+    const aviso = document.createElement('span');
+    aviso.className = 'text-gray-400 italic';
+    aviso.textContent = 'No registradas';
+    divRedes.appendChild(aviso);
+}
 
             const mapDiv = document.getElementById('mapContainer');
             if (appState.mapInstance) {
@@ -1960,7 +2136,22 @@ appState.isReadOnly = true;
 
             const tl = document.getElementById('timelineContainer'); 
             tl.innerHTML = '';
-            
+
+            tl.onclick = function(event) {
+            if (!(event.target instanceof Element)) return;
+
+            const botonEditar = event.target.closest('[data-edit-activity-id]');
+
+            if (!botonEditar || !tl.contains(botonEditar)) return;
+
+            if (appState.isReadOnly) return;
+
+            const idActividad = botonEditar.dataset.editActivityId;
+
+            if (!idActividad) return;
+
+            openEditActivityModal(idActividad);
+        };
             let heatPoints = [];
             let markers = [];
 
@@ -1969,17 +2160,23 @@ appState.isReadOnly = true;
             } else {
                 asp.actividades.forEach(act => {
                     const fechaLimpia = formatearFecha(act.fecha);
+                    const fechaActividadSegura = escaparHTML(fechaLimpia);
+                    const tituloActividadSeguro = escaparHTML(act.titulo);
+                    const descripcionActividadSegura = escaparHTML(act.descripcion);
+                    const asistentesActividadSeguro = escaparHTML(act.asistentes);
+                    const anfitrionesActividadSeguro = escaparHTML(act.anfitriones);
+                    const modificadoActividadSeguro = escaparHTML(act.modificadoPor);
                     
                     let editBtn = '';
                     if (!appState.isReadOnly) {
-                        editBtn = `<button onclick="openEditActivityModal('${act.id}')" class="text-gray-400 hover:text-blue-600 p-1 transition" title="Editar actividad"><i class="fas fa-edit text-sm"></i></button>`;
+                        editBtn = `<button type="button" data-edit-activity-id="${escaparHTML(act.id)}" class="text-gray-400 hover:text-blue-600 p-1 transition" title="Editar actividad"><i class="fas fa-edit text-sm"></i></button>`;
                     }
 
                     let extrasHtml = '';
                     if (act.asistentes || act.anfitriones || act.ubicacion) {
                         extrasHtml = `<div class="mt-3 flex flex-wrap gap-2 text-xs font-medium text-gray-600">`;
-                        if (act.asistentes) extrasHtml += `<span class="bg-gray-100 px-2 py-1 rounded border border-gray-200"><i class="fas fa-users mr-1 text-gray-400"></i> ${act.asistentes} asis.</span>`;
-                        if (act.anfitriones) extrasHtml += `<span class="bg-gray-100 px-2 py-1 rounded border border-gray-200"><i class="fas fa-user-tie mr-1 text-gray-400"></i> ${act.anfitriones}</span>`;
+                        if (act.asistentes) extrasHtml += `<span class="bg-gray-100 px-2 py-1 rounded border border-gray-200"><i class="fas fa-users mr-1 text-gray-400"></i> ${asistentesActividadSeguro} asis.</span>`;
+                        if (act.anfitriones) extrasHtml += `<span class="bg-gray-100 px-2 py-1 rounded border border-gray-200"><i class="fas fa-user-tie mr-1 text-gray-400"></i> ${anfitrionesActividadSeguro}</span>`;
                         
                         if (act.ubicacion) {
                             const coordsMatch = act.ubicacion.match(/([-+]?\d{1,2}\.\d+),\s*([-+]?\d{1,3}\.\d+)/);
@@ -1998,14 +2195,14 @@ appState.isReadOnly = true;
                             }
                             
                             let mapUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(act.ubicacion)}`;
-                            extrasHtml += `<a href="${mapUrl}" target="_blank" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition" title="Ver ubicación en Google Maps"><i class="fas fa-map-marker-alt mr-1"></i> Mapa</a>`;
+                            extrasHtml += `<a href="${mapUrl}" target="_blank" rel="noopener noreferrer" class="bg-blue-50 text-blue-700 px-2 py-1 rounded border border-blue-200 hover:bg-blue-100 transition" title="Ver ubicación en Google Maps"><i class="fas fa-map-marker-alt mr-1"></i> Mapa</a>`;
                         }
                         extrasHtml += `</div>`;
                     }
 
                     let auditoriaAct = '';
                     if (act.modificadoPor) {
-                        auditoriaAct = `<div class="mt-2 text-[11px] text-gray-400 italic">Por: <span class="text-purple-700 font-medium not-italic">${act.modificadoPor}</span></div>`;
+                        auditoriaAct = `<div class="mt-2 text-[11px] text-gray-400 italic">Por: <span class="text-purple-700 font-medium not-italic">${modificadoActividadSeguro}</span></div>`;
                     }
 
                     tl.innerHTML += `
@@ -2013,11 +2210,11 @@ appState.isReadOnly = true;
                         <span class="absolute -left-[9px] top-1 h-4 w-4 rounded-full bg-blue-500 ring-4 ring-white"></span>
                         <div>
                             <div class="flex justify-between items-start">
-                                <span class="text-xs font-semibold text-blue-600 uppercase tracking-wide">${fechaLimpia}</span>
+                                <span class="text-xs font-semibold text-blue-600 uppercase tracking-wide">${fechaActividadSegura}</span>
                                 ${editBtn}
                             </div>
-                            <h4 class="text-md font-bold text-gray-900 mt-0.5">${act.titulo}</h4>
-                            <p class="text-sm text-gray-600 mt-1">${act.descripcion}</p>
+                            <h4 class="text-md font-bold text-gray-900 mt-0.5">${tituloActividadSeguro}</h4>
+                            <p class="text-sm text-gray-600 mt-1">${descripcionActividadSegura}</p>
                             ${extrasHtml}
                             ${auditoriaAct}
                         </div>
@@ -2065,7 +2262,7 @@ appState.isReadOnly = true;
 
                     L.marker([m.lat, m.lng])
                         .addTo(appState.mapInstance)
-                        .bindPopup(`<b>${m.title}</b><br><span class="text-xs text-gray-500">${m.date}</span><br><b>Asistentes:</b> ${m.asistentes}`);
+                        .bindPopup(`<b>${escaparHTML(m.title)}</b><br><span class="text-xs text-gray-500">${escaparHTML(m.date)}</span><br><b>Asistentes:</b> ${escaparHTML(m.asistentes)}`);
                 });
                 
                 if (heatPoints.length > 1) {
@@ -2084,11 +2281,30 @@ appState.isReadOnly = true;
 
             const media = document.getElementById('mediaContainer'); 
             media.innerHTML = '';
+            media.onclick = function(event) {
+                if (!(event.target instanceof Element)) return;
+
+                const botonEditar = event.target.closest('[data-edit-publication-id]');
+
+                if (!botonEditar || !media.contains(botonEditar)) return;
+
+                if (appState.isReadOnly) return;
+
+                const idPublicacion = botonEditar.dataset.editPublicationId;
+
+                if (!idPublicacion) return;
+
+                openEditPublicationModal(idPublicacion);
+            };
             if (!asp.publicaciones || asp.publicaciones.length === 0) {
                 media.innerHTML = '<p class="text-sm text-gray-500 italic">No hay publicaciones registradas.</p>';
             } else {
                 asp.publicaciones.forEach(pub => { 
                     const fechaLimpia = formatearFecha(pub.fecha);
+                    const fechaPublicacionSegura = escaparHTML(fechaLimpia);
+                    const plataformaPublicacionSegura = escaparHTML(pub.plataforma);
+                    const contenidoPublicacionSeguro = escaparHTML(pub.contenido);
+                    const modificadoPublicacionSeguro = escaparHTML(pub.modificadoPor);
                     let icon = 'fa-globe'; 
                     if (pub.plataforma.toLowerCase() === 'facebook') icon = 'fa-facebook text-blue-600'; 
                     if (pub.plataforma.toLowerCase() === 'x') icon = 'fa-x-twitter text-black'; 
@@ -2096,14 +2312,42 @@ appState.isReadOnly = true;
                     
                     let editBtn = '';
                     if (!appState.isReadOnly) {
-                        editBtn = `<button onclick="openEditPublicationModal('${pub.id}')" class="text-gray-400 hover:text-indigo-600 p-1 transition ml-2" title="Editar publicación"><i class="fas fa-edit text-sm"></i></button>`;
+                        editBtn = `<button type="button" data-edit-publication-id="${escaparHTML(pub.id)}" class="text-gray-400 hover:text-indigo-600 p-1 transition ml-2" title="Editar publicación"><i class="fas fa-edit text-sm"></i></button>`;
                     }
 
-                    let urlHtml = pub.url ? `<a href="${pub.url}" target="_blank" class="text-xs text-blue-600 hover:underline mt-2 inline-block"><i class="fas fa-external-link-alt mr-1"></i>Ver</a>` : ''; 
+                    let urlHtml = '';
+                    let urlPublicacionSegura = null;
+
+                    if (pub.url && String(pub.url).trim() !== '') {
+                        try {
+                            const textoUrl = String(pub.url).trim();
+
+                            const url = new URL(
+                                /^https?:\/\//i.test(textoUrl)
+                                    ? textoUrl
+                                    : 'https://' + textoUrl
+                            );
+
+                            if (
+                                ['http:', 'https:'].includes(url.protocol) &&
+                                url.hostname &&
+                                !url.username &&
+                                !url.password
+                            ) {
+                                urlPublicacionSegura = escaparHTML(url.href);
+                            }
+                        } catch (error) {
+                            urlPublicacionSegura = null;
+                        }
+                    }
+
+                    if (urlPublicacionSegura) {
+                        urlHtml = `<a href="${urlPublicacionSegura}" target="_blank" rel="noopener noreferrer" class="text-xs text-blue-600 hover:underline mt-2 inline-block"><i class="fas fa-external-link-alt mr-1"></i>Ver</a>`;
+                    }
                     
                     let auditoriaPub = '';
                     if (pub.modificadoPor) {
-                        auditoriaPub = `<div class="mt-2 pt-2 border-t border-gray-100 text-[11px] text-gray-400 italic text-right">Por: <span class="text-purple-700 font-medium not-italic">${pub.modificadoPor}</span></div>`;
+                        auditoriaPub = `<div class="mt-2 pt-2 border-t border-gray-100 text-[11px] text-gray-400 italic text-right">Por: <span class="text-purple-700 font-medium not-italic">${modificadoPublicacionSeguro}</span></div>`;
                     }
 
                     media.innerHTML += `
@@ -2111,14 +2355,14 @@ appState.isReadOnly = true;
                         <div class="flex justify-between items-start mb-2">
                             <div class="flex items-center">
                                 <i class="fab ${icon} text-lg mr-2"></i>
-                                <span class="font-bold text-sm">${pub.plataforma}</span>
+                                <span class="font-bold text-sm">${plataformaPublicacionSegura}</span>
                             </div>
                             <div class="flex items-center space-x-1">
-                                <span class="text-xs text-gray-500">${fechaLimpia}</span>
+                                <span class="text-xs text-gray-500">${fechaPublicacionSegura}</span>
                                 ${editBtn}
                             </div>
                         </div>
-                        <p class="text-sm text-gray-700 italic">"${pub.contenido}"</p>
+                        <p class="text-sm text-gray-700 italic">"${contenidoPublicacionSeguro}"</p>
                         ${urlHtml}
                         ${auditoriaPub}
                     </div>`; 
@@ -2223,14 +2467,51 @@ appState.isReadOnly = true;
 
             let html = '';
             filtradas.forEach(aut => {
+                const nombreAutSeguro = escaparHTML(aut.nombreCompleto);
+                const institucionAutSegura = escaparHTML(aut.institucion || 'N/A');
+                const calidadAutSegura = escaparHTML(aut.calidadParticipacion);
+                const condicionAutSegura = escaparHTML(aut.condicion);
+                const puestoAutSeguro = escaparHTML(aut.puestoCargo);
+                const organoAutSeguro = escaparHTML(aut.organoColegiado || 'N/A');
+                const ambitoAutSeguro = escaparHTML(aut.ambitoDistrito);
+                const partidoAutSeguro = escaparHTML(aut.partidoOrganizacion);
+                const telefonoAutSeguro = escaparHTML(
+                    aut.telefonoDirecto
+                        ? `${aut.telefonoDirecto}${aut.extension ? ' ext. ' + aut.extension : ''}`
+                        : ''
+                );
+                const correoAutSeguro = escaparHTML(aut.correoElectronico);
+                const inicialAutSegura = escaparHTML(
+                    String(aut.nombreCompleto || '?').charAt(0).toUpperCase()
+                );
                 const isINE = (aut.institucion || '').toUpperCase() === 'INE';
                 const instBadgeClass = isINE
                     ? 'bg-pink-100 text-pink-800 border border-pink-200'
                     : 'bg-amber-100 text-amber-800 border border-amber-200';
 
-                let avatarHtml = `<div class="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xl flex-shrink-0">${(aut.nombreCompleto || '?').charAt(0).toUpperCase()}</div>`;
-                if (aut.foto && aut.foto.trim() !== '') {
-                    avatarHtml = `<img src="${aut.foto}" class="h-14 w-14 rounded-xl object-cover bg-gray-100 border border-gray-200 flex-shrink-0">`;
+                let avatarHtml = `<div class="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xl flex-shrink-0">${inicialAutSegura}</div>`;
+
+                if (aut.foto && String(aut.foto).trim() !== '') {
+                    let fotoAutSegura = null;
+
+                    try {
+                        const urlFoto = new URL(String(aut.foto).trim());
+
+                        if (
+                            ['https:', 'http:'].includes(urlFoto.protocol) &&
+                            urlFoto.hostname &&
+                            !urlFoto.username &&
+                            !urlFoto.password
+                        ) {
+                            fotoAutSegura = escaparHTML(urlFoto.href);
+                        }
+                    } catch (error) {
+                        fotoAutSegura = null;
+                    }
+
+                    if (fotoAutSegura) {
+                        avatarHtml = `<img src="${fotoAutSegura}" class="h-14 w-14 rounded-xl object-cover bg-gray-100 border border-gray-200 flex-shrink-0" alt="Fotografía de autoridad electoral">`;
+                    }
                 }
 
                 const sedeObj = obtenerSedePorId(aut.idSede);
@@ -2241,37 +2522,54 @@ appState.isReadOnly = true;
                     : '';
 
                 html += `
-                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-200 overflow-hidden cursor-pointer flex flex-col justify-between break-inside-avoid" onclick="viewAutoridadDetail('${aut.id}')">
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-200 overflow-hidden cursor-pointer flex flex-col justify-between break-inside-avoid" data-autoridad-id="${escaparHTML(aut.id)}">
                     <div class="p-5">
                         <div class="flex items-start space-x-4 mb-3">
                             ${avatarHtml}
                             <div class="flex-1 min-w-0">
                                 <div class="flex flex-wrap items-center gap-1 mb-1">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase ${instBadgeClass}">${aut.institucion || 'N/A'}</span>
-                                    ${aut.calidadParticipacion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${aut.calidadParticipacion}</span>` : ''}
-                                    ${aut.condicion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700">${aut.condicion}</span>` : ''}
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase ${instBadgeClass}">${institucionAutSegura}</span>
+                                    ${aut.calidadParticipacion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${calidadAutSegura}</span>` : ''}
+                                    ${aut.condicion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700">${condicionAutSegura}</span>` : ''}
                                 </div>
-                                <h3 class="text-base font-bold text-gray-900 leading-snug">${aut.nombreCompleto}</h3>
-                                <p class="text-xs font-semibold text-purple-700 mt-0.5">${aut.puestoCargo || ''}</p>
+                                <h3 class="text-base font-bold text-gray-900 leading-snug">${nombreAutSeguro}</h3>
+                                <p class="text-xs font-semibold text-purple-700 mt-0.5">${puestoAutSeguro}</p>
                             </div>
                         </div>
 
                         <div class="text-xs text-gray-600 space-y-1.5 mt-3 pt-3 border-t border-gray-100">
-                            <p><i class="fas fa-sitemap w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Órgano:</b> ${aut.organoColegiado || 'N/A'} ${aut.ambitoDistrito ? `(${aut.ambitoDistrito})` : ''}</p>
-                            ${aut.partidoOrganizacion && aut.partidoOrganizacion !== 'No aplica' ? `<p><i class="fas fa-flag w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Partido:</b> ${aut.partidoOrganizacion}</p>` : ''}
-                            ${telCompleto ? `<p><i class="fas fa-phone w-4 text-gray-400 mr-1"></i> ${telCompleto}</p>` : ''}
-                            ${aut.correoElectronico ? `<p class="truncate"><i class="fas fa-envelope w-4 text-gray-400 mr-1"></i> ${aut.correoElectronico}</p>` : ''}
+                            <p><i class="fas fa-sitemap w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Órgano:</b> ${organoAutSeguro} ${aut.ambitoDistrito ? `(${ambitoAutSeguro})` : ''}</p>
+                            ${aut.partidoOrganizacion && aut.partidoOrganizacion !== 'No aplica' ? `<p><i class="fas fa-flag w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Partido:</b> ${partidoAutSeguro}</p>` : ''}
+                            ${telCompleto ? `<p><i class="fas fa-phone w-4 text-gray-400 mr-1"></i> ${telefonoAutSeguro}</p>` : ''}
+                            ${aut.correoElectronico ? `<p class="truncate"><i class="fas fa-envelope w-4 text-gray-400 mr-1"></i> ${correoAutSeguro}</p>` : ''}
                         </div>
                     </div>
 
                     <div class="bg-gray-50 px-5 py-2.5 border-t border-gray-100 flex justify-between items-center text-[11px] text-gray-500">
-                        <span class="truncate"><i class="fas fa-building mr-1 text-purple-500"></i> ${sedeNombre}</span>
+                        <span class="truncate"><i class="fas fa-building mr-1 text-purple-500"></i> ${escaparHTML(sedeNombre)}</span>
                         <span class="font-semibold text-purple-700 ml-2 whitespace-nowrap">Ver ficha <i class="fas fa-chevron-right ml-0.5 text-[10px]"></i></span>
                     </div>
                 </div>`;
             });
 
             grid.innerHTML = html;
+            grid.onclick = function(event) {
+    const elemento = event.target;
+
+    if (!(elemento instanceof Element)) {
+        return;
+    }
+
+    const tarjeta = elemento.closest('[data-autoridad-id]');
+
+    if (tarjeta && grid.contains(tarjeta)) {
+        const idAutoridad = tarjeta.dataset.autoridadId;
+
+        if (idAutoridad) {
+            viewAutoridadDetail(idAutoridad);
+        }
+    }
+};
         }
 
         function backToAutoridadesDashboard() {
@@ -2299,8 +2597,28 @@ appState.isReadOnly = true;
             if (!aut) return;
 
             let bigAvatar = `<div class="h-32 w-32 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 text-5xl font-bold mb-4 md:mb-0 md:mr-6 flex-shrink-0 shadow-sm border border-purple-200"><i class="fas fa-user-tie"></i></div>`;
-            if (aut.foto && aut.foto.trim() !== '') {
-                bigAvatar = `<div class="h-40 w-32 rounded-lg bg-gray-100 flex-shrink-0 border border-gray-300 shadow-md mb-4 md:mb-0 md:mr-6 flex items-center justify-center overflow-hidden"><img src="${aut.foto}" class="h-full w-full object-contain"></div>`;
+
+            if (aut.foto && String(aut.foto).trim() !== '') {
+                let fotoDetalleSegura = null;
+
+                try {
+                    const urlFoto = new URL(String(aut.foto).trim());
+
+                    if (
+                        ['https:', 'http:'].includes(urlFoto.protocol) &&
+                        urlFoto.hostname &&
+                        !urlFoto.username &&
+                        !urlFoto.password
+                    ) {
+                        fotoDetalleSegura = escaparHTML(urlFoto.href);
+                    }
+                } catch (error) {
+                    fotoDetalleSegura = null;
+                }
+
+                if (fotoDetalleSegura) {
+                    bigAvatar = `<div class="h-40 w-32 rounded-lg bg-gray-100 flex-shrink-0 border border-gray-300 shadow-md mb-4 md:mb-0 md:mr-6 flex items-center justify-center overflow-hidden"><img src="${fotoDetalleSegura}" class="h-full w-full object-contain" alt="Fotografía de autoridad electoral"></div>`;
+                }
             }
             document.getElementById('autDetailAvatarContainer').innerHTML = bigAvatar;
 
@@ -2328,24 +2646,96 @@ appState.isReadOnly = true;
             const telText = aut.telefonoDirecto
                 ? `${aut.telefonoDirecto}${aut.extension ? ' (Ext. ' + aut.extension + ')' : ''}`
                 : 'No registrado';
-            document.getElementById('autDetailTelefono').innerHTML = `<i class="fas fa-phone mr-1.5 text-gray-400"></i>${telText}`;
+            const telefonoAutoridad = document.getElementById('autDetailTelefono');
+
+telefonoAutoridad.innerHTML =
+    '<i class="fas fa-phone mr-1.5 text-gray-400"></i>';
+
+telefonoAutoridad.appendChild(
+    document.createTextNode(telText)
+);
 
             const correoDiv = document.getElementById('autDetailCorreo');
-            if (aut.correoElectronico && aut.correoElectronico.trim() !== '') {
-                correoDiv.innerHTML = `<a href="mailto:${aut.correoElectronico}" class="text-blue-600 hover:underline font-medium"><i class="fas fa-envelope mr-1.5 text-gray-400"></i>${aut.correoElectronico}</a>`;
-            } else {
-                correoDiv.innerHTML = `<span class="text-gray-400 italic">No registrado</span>`;
-            }
+correoDiv.replaceChildren();
+
+const correoAutoridad = String(aut.correoElectronico || '').trim();
+
+const correoValido =
+    /^[^\s@<>:"'\\]+@[^\s@<>:"'\\]+\.[^\s@<>:"'\\]+$/.test(correoAutoridad);
+
+if (correoValido) {
+    const enlaceCorreo = document.createElement('a');
+    enlaceCorreo.href = 'mailto:' + correoAutoridad;
+    enlaceCorreo.className =
+        'text-blue-600 hover:underline font-medium';
+
+    const iconoCorreo = document.createElement('i');
+    iconoCorreo.className =
+        'fas fa-envelope mr-1.5 text-gray-400';
+
+    enlaceCorreo.appendChild(iconoCorreo);
+    enlaceCorreo.appendChild(
+        document.createTextNode(correoAutoridad)
+    );
+
+    correoDiv.appendChild(enlaceCorreo);
+
+} else {
+    const avisoCorreo = document.createElement('span');
+    avisoCorreo.className = 'text-gray-400 italic';
+    avisoCorreo.textContent = correoAutoridad || 'No registrado';
+    correoDiv.appendChild(avisoCorreo);
+}
 
             document.getElementById('autDetailPartido').innerText = aut.partidoOrganizacion || 'No aplica';
 
             const redesDiv = document.getElementById('autDetailRedes');
-            if (aut.redesSociales && aut.redesSociales.trim() !== '') {
-                const link = aut.redesSociales.startsWith('http') ? aut.redesSociales : 'https://' + aut.redesSociales;
-                redesDiv.innerHTML = `<a href="${link}" target="_blank" class="text-blue-600 hover:underline"><i class="fas fa-link mr-1.5 text-gray-400"></i>${aut.redesSociales}</a>`;
-            } else {
-                redesDiv.innerHTML = `<span class="text-gray-400 italic">No registradas</span>`;
-            }
+redesDiv.replaceChildren();
+
+const redAutoridad = String(aut.redesSociales || '').trim();
+
+if (redAutoridad) {
+    let urlSegura = null;
+
+    try {
+        const url = new URL(
+            /^https?:\/\//i.test(redAutoridad)
+                ? redAutoridad
+                : 'https://' + redAutoridad
+        );
+
+        if (['http:', 'https:'].includes(url.protocol) &&
+            url.hostname &&
+            !url.username &&
+            !url.password) {
+            urlSegura = url.href;
+        }
+    } catch (error) {
+        urlSegura = null;
+    }
+
+    if (urlSegura) {
+        const enlace = document.createElement('a');
+        enlace.href = urlSegura;
+        enlace.target = '_blank';
+        enlace.rel = 'noopener noreferrer';
+        enlace.className = 'text-blue-600 hover:underline';
+
+        const icono = document.createElement('i');
+        icono.className = 'fas fa-link mr-1.5 text-gray-400';
+
+        enlace.appendChild(icono);
+        enlace.appendChild(document.createTextNode(redAutoridad));
+        redesDiv.appendChild(enlace);
+    } else {
+        redesDiv.textContent = redAutoridad;
+    }
+} else {
+    const aviso = document.createElement('span');
+    aviso.className = 'text-gray-400 italic';
+    aviso.textContent = 'No registradas';
+    redesDiv.appendChild(aviso);
+}
 
             document.getElementById('autDetailSintesis').innerText = aut.sintesisCurricular || 'Sin síntesis curricular capturada.';
             document.getElementById('autDetailModificadoPor').innerText = aut.modificadoPor || 'Sin registro';
@@ -2363,20 +2753,27 @@ appState.isReadOnly = true;
                 const googleMapsUrl = sedeObj.coordenadasGps
                     ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sedeObj.coordenadasGps)}`
                     : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(sedeObj.direccionCompleta || sedeObj.nombreSede)}`;
+                const sedeInstitucionSegura = escaparHTML(sedeObj.institucion);
+                const sedeIdSeguro = escaparHTML(sedeObj.idSede);
+                const sedeNombreSeguro = escaparHTML(sedeObj.nombreSede);
+                const sedeCabeceraSegura = escaparHTML(sedeObj.cabeceraMunicipio || 'N/A');
+                const sedeDireccionSegura = escaparHTML(sedeObj.direccionCompleta || 'N/A');
+                const sedeTelefonoSeguro = escaparHTML(sedeObj.telefonoConmutador || 'N/A');
+                const sedeHorarioSeguro = escaparHTML(sedeObj.horarioAtencion || 'N/A');
 
                 sedeInfoDiv.innerHTML = `
                     <div>
-                        <span class="text-[11px] font-bold uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded">${sedeObj.institucion} • ${sedeObj.idSede}</span>
-                        <h4 class="text-base font-bold text-gray-900 mt-1">${sedeObj.nombreSede}</h4>
-                        <p class="text-xs text-gray-600 font-medium">Cabecera: ${sedeObj.cabeceraMunicipio || 'N/A'}</p>
+                        <span class="text-[11px] font-bold uppercase text-purple-700 bg-purple-100 px-2 py-0.5 rounded">${sedeInstitucionSegura} • ${sedeIdSeguro}</span>
+                        <h4 class="text-base font-bold text-gray-900 mt-1">${sedeNombreSeguro}</h4>
+                        <p class="text-xs text-gray-600 font-medium">Cabecera: ${sedeCabeceraSegura}</p>
                     </div>
                     <div class="text-xs text-gray-700 space-y-1.5 pt-2 border-t border-purple-200">
-                        <p><i class="fas fa-map-pin w-4 text-purple-600 mr-1"></i> <b>Dirección:</b> ${sedeObj.direccionCompleta || 'N/A'}</p>
-                        <p><i class="fas fa-phone-alt w-4 text-purple-600 mr-1"></i> <b>Conmutador:</b> ${sedeObj.telefonoConmutador || 'N/A'}</p>
-                        <p><i class="far fa-clock w-4 text-purple-600 mr-1"></i> <b>Horario:</b> ${sedeObj.horarioAtencion || 'N/A'}</p>
+                        <p><i class="fas fa-map-pin w-4 text-purple-600 mr-1"></i> <b>Dirección:</b> ${sedeDireccionSegura}</p>
+                        <p><i class="fas fa-phone-alt w-4 text-purple-600 mr-1"></i> <b>Conmutador:</b> ${sedeTelefonoSeguro}</p>
+                        <p><i class="far fa-clock w-4 text-purple-600 mr-1"></i> <b>Horario:</b> ${sedeHorarioSeguro}</p>
                     </div>
                     <div class="pt-2">
-                        <a href="${googleMapsUrl}" target="_blank" class="inline-flex items-center px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition">
+                        <a href="${googleMapsUrl}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-semibold rounded-md shadow-sm transition">
                             <i class="fas fa-external-link-alt mr-1.5"></i> Abrir en Google Maps
                         </a>
                     </div>
@@ -2395,9 +2792,11 @@ appState.isReadOnly = true;
                     }).addTo(appState.autMapInstance);
 
                     L.marker([lat, lng])
-                        .addTo(appState.autMapInstance)
-                        .bindPopup(`<b>${sedeObj.nombreSede}</b><br><span class="text-xs">${sedeObj.direccionCompleta || ''}</span>`)
-                        .openPopup();
+                    .addTo(appState.autMapInstance)
+                    .bindPopup(
+                        `<b>${sedeNombreSeguro}</b><br><span class="text-xs">${escaparHTML(sedeObj.direccionCompleta || '')}</span>`
+                    )
+                    .openPopup();
 
                     setTimeout(() => {
                         if (appState.autMapInstance) appState.autMapInstance.invalidateSize();
@@ -2407,7 +2806,7 @@ appState.isReadOnly = true;
                     mapDiv.innerHTML = `<span class="text-gray-400 italic">La sede no cuenta con coordenadas GPS válidas.</span>`;
                 }
             } else {
-                sedeInfoDiv.innerHTML = `<p class="text-sm text-gray-500 italic">Esta autoridad no tiene una sede vinculada o el código de sede (${aut.idSede || 'vacío'}) no existe en el catálogo.</p>`;
+                sedeInfoDiv.innerHTML = `<p class="text-sm text-gray-500 italic">Esta autoridad no tiene una sede vinculada o el código de sede (${escaparHTML(aut.idSede || 'vacío')}) no existe en el catálogo.</p>`;
                 mapDiv.className = "w-full h-[200px] bg-gray-50 rounded-md border border-gray-200 flex items-center justify-center";
                 mapDiv.innerHTML = `<span class="text-gray-400 italic">Sin sede georreferenciada para mostrar.</span>`;
             }
