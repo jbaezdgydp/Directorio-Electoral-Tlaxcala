@@ -12,7 +12,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 </head>
-<body class="bg-gray-100 font-sans antialiased text-gray-800">
+<body class="bg-gray-100 font-sans antialiased text-gray-800 overscroll-y-contain">
 
     <!-- OVERLAY DE ACCESO (LOGIN) -->
     <div id="loginOverlay" class="fixed inset-0 bg-purple-900 z-[200] flex items-center justify-center">
@@ -1123,9 +1123,71 @@
             }
         }
 
-        function checkSavedSession() {
+     //       function checkSavedSession() {
             // Las sesiones ya no se restauran desde localStorage. Esto elimina contraseñas/tokens persistentes.
+     //       try { localStorage.removeItem('directorio_electoral_sesion_activa'); } catch (e) {}
+      //      appState.role = 'guest';
+      //      appState.userName = 'Invitado';
+      //     appState.sessionToken = null;
+      //      appState.isReadOnly = true;
+      //      return false;
+      //  }
+        const CLAVE_SESION_TAB = 'directorio_tlaxcala_sesion_tab_v1';
+        const TIEMPO_MAX_SESION_MS = 2 * 60 * 60 * 1000; // 2 horas de vigencia en la pestaña
+
+        function guardarSesionEnPestana() {
+            try {
+                // Solo se guarda el token temporal y el rol en la pestaña activa (nunca la contraseña)
+                sessionStorage.setItem(CLAVE_SESION_TAB, JSON.stringify({
+                    role: appState.role,
+                    userName: appState.userName,
+                    sessionToken: appState.sessionToken,
+                    isReadOnly: appState.isReadOnly,
+                    timestamp: Date.now()
+                }));
+            } catch (e) {
+                console.warn('No se pudo guardar la sesión temporal:', e);
+            }
+        }
+
+        function limpiarSesionEnPestana() {
+            try {
+                sessionStorage.removeItem(CLAVE_SESION_TAB);
+                localStorage.removeItem('directorio_electoral_sesion_activa');
+            } catch (e) {}
+        }
+
+        function checkSavedSession() {
             try { localStorage.removeItem('directorio_electoral_sesion_activa'); } catch (e) {}
+
+            try {
+                const raw = sessionStorage.getItem(CLAVE_SESION_TAB);
+                if (raw) {
+                    const sesion = JSON.parse(raw);
+                    const vigente = sesion.timestamp && (Date.now() - sesion.timestamp < TIEMPO_MAX_SESION_MS);
+
+                    // Restaurar si es un editor/admin con token o si ya había entrado como invitado
+                    if (vigente && ((sesion.role !== 'guest' && sesion.sessionToken) || sesion.role === 'guest')) {
+                        appState.role = sesion.role;
+                        appState.userName = sesion.userName || 'Invitado';
+                        appState.sessionToken = sesion.sessionToken || null;
+                        appState.isReadOnly = Boolean(sesion.isReadOnly);
+
+                        // Renovar marca de tiempo tras la recarga
+                        guardarSesionEnPestana();
+
+                        document.getElementById('loginOverlay').classList.add('hidden');
+                        applyPermissions();
+                        fetchInitialData();
+                        return true;
+                    } else {
+                        limpiarSesionEnPestana();
+                    }
+                }
+            } catch (e) {
+                console.warn('No fue posible restaurar la sesión temporal:', e);
+            }
+
             appState.role = 'guest';
             appState.userName = 'Invitado';
             appState.sessionToken = null;
@@ -1470,6 +1532,7 @@ function cerrarModalNuevoUsuario() {
                 console.warn('No fue posible confirmar la revocación de la sesión:', error);
             } finally {
                 limpiarCacheDirectorio();
+                limpiarSesionEnPestana();
                 document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
                 appState.role = 'guest';
                 appState.userName = 'Invitado';
@@ -1495,6 +1558,7 @@ function cerrarModalNuevoUsuario() {
             appState.role = 'guest';
             appState.userName = 'Invitado';
             appState.sessionToken = null;
+            guardarSesionEnPestana();
             document.getElementById('loginOverlay').classList.add('hidden');
             applyPermissions();
             fetchInitialData();
@@ -1535,6 +1599,7 @@ function cerrarModalNuevoUsuario() {
                     appState.role = res.rol;
                     appState.userName = res.nombre || usuario;
                     appState.sessionToken = res.sessionToken;
+                    guardarSesionEnPestana();
                     closeModal('passwordModal');
                     document.getElementById('loginOverlay').classList.add('hidden');
                     document.getElementById('adminPasswordInput').value = '';
@@ -1777,6 +1842,7 @@ console.log(
                 appState.selectedAspiranteId = null;
                 appState.selectedAutoridadId = null;
                 limpiarCacheDirectorio();
+                limpiarSesionEnPestana();
                 document.getElementById('panelAdministracionUsuarios').classList.add('hidden');
                 ['passwordModal', 'addModal', 'activityModal', 'publicationModal',
                  'autoridadModal', 'sedeModal'].forEach(id => {
