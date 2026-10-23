@@ -67,27 +67,27 @@
 
     <!-- NAVEGACIÓN FIJA SUPERIOR -->
     <nav class="bg-purple-800 text-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8">
-            <div class="flex flex-wrap items-center justify-between py-1.5 sm:py-2 gap-1.5 sm:gap-2">
-                <!-- Fila 1 en móvil: Título -->
+        <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-2">
+            <div class="flex flex-col gap-2">
+                <!-- Título principal -->
                 <div class="flex items-center cursor-pointer select-none" onclick="switchModule(appState.activeModule)">
                     <i class="fas fa-clipboard-list text-lg sm:text-2xl mr-2 text-amber-300"></i>
-                    <span class="font-bold text-sm sm:text-xl tracking-tight">Directorio Electoral Tlaxcala</span>
+                    <span class="font-bold text-base sm:text-xl tracking-tight">Directorio Electoral Tlaxcala</span>
                 </div>
 
-                <!-- Fila 3 en móvil / Centro en escritorio: Pestañas en una sola línea -->
-                <div class="flex items-center justify-center space-x-1.5 sm:space-x-2 order-3 md:order-2 w-full md:w-auto pt-0.5 md:pt-0">
-                    <button id="tabBtnAspirantes" onclick="switchModule('aspirantes')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400 whitespace-nowrap">
+                <!-- 1. Arriba: Botones de Aspirantes y Autoridades (INE / ITE) -->
+                <div class="flex items-center gap-2 w-full">
+                    <button id="tabBtnAspirantes" onclick="switchModule('aspirantes')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400 whitespace-nowrap">
                         <i class="fas fa-users mr-1.5 sm:mr-2"></i> Aspirantes
                     </button>
-                    <button id="tabBtnAutoridades" onclick="switchModule('autoridades')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center bg-purple-900/60 hover:bg-purple-700 text-purple-100 border border-purple-600 whitespace-nowrap">
+                    <button id="tabBtnAutoridades" onclick="switchModule('autoridades')" class="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center bg-purple-900/60 hover:bg-purple-700 text-purple-100 border border-purple-600 whitespace-nowrap">
                         <i class="fas fa-landmark mr-1.5 sm:mr-2"></i> Autoridades (INE / ITE)
                     </button>
                 </div>
                 
-                <!-- Fila 2 en móvil / Derecha en escritorio: Usuario, Salir y + Nuevo en línea -->
-                <div class="flex flex-wrap items-center justify-start sm:justify-end gap-1.5 sm:gap-2 order-2 md:order-3 w-full md:w-auto">
-                    <span id="userStatusBadge" class="hidden text-[10px] sm:text-xs bg-purple-900/90 text-purple-100 border border-purple-600 px-2 sm:px-3 py-1 rounded-full max-w-[115px] sm:max-w-xs truncate"></span>
+                <!-- 2. Debajo de ellos: Usuario conectado, Administrar Usuarios (si es Admin) y botón Salir -->
+                <div class="flex flex-wrap items-center gap-2 w-full">
+                    <span id="userStatusBadge" class="hidden text-[11px] sm:text-xs bg-purple-900/90 text-purple-100 border border-purple-600 px-2.5 sm:px-3 py-1 rounded-full max-w-[210px] sm:max-w-xs truncate"></span>
                     
                     <button
                         id="btnAdministrarUsuarios"
@@ -99,12 +99,15 @@
                         Administrar Usuarios
                     </button>
 
-                    <button id="btnLogout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-2.5 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition duration-150 shadow-sm hidden flex items-center whitespace-nowrap" title="Cerrar sesión actual">
+                    <button id="btnLogout" onclick="logout()" class="bg-red-600 hover:bg-red-700 text-white px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg text-[11px] sm:text-xs font-semibold transition duration-150 shadow-sm hidden flex items-center whitespace-nowrap" title="Cerrar sesión actual">
                         <i class="fas fa-door-open mr-1"></i> Salir
                     </button>
+                </div>
 
-                    <button id="btnNuevoRegistro" onclick="handleMainNewAction()" class="bg-fuchsia-600 hover:bg-fuchsia-500 px-2.5 sm:px-4 py-1 sm:py-1.5 rounded-lg font-bold transition duration-150 ease-in-out shadow text-[11px] sm:text-sm hidden whitespace-nowrap flex items-center">
-                        <i class="fas fa-plus mr-1"></i> <span id="btnNuevoRegistroText">Nuevo Aspirante</span>
+                <!-- 3. Hasta abajo a la derecha: Botón + Nuevo Aspirante -->
+                <div class="flex justify-end w-full">
+                    <button id="btnNuevoRegistro" onclick="handleMainNewAction()" class="bg-fuchsia-600 hover:bg-fuchsia-500 px-3.5 sm:px-4 py-1.5 rounded-full font-bold transition duration-150 ease-in-out shadow text-xs sm:text-sm hidden whitespace-nowrap flex items-center">
+                        <i class="fas fa-plus mr-1.5"></i> <span id="btnNuevoRegistroText">Nuevo Aspirante</span>
                     </button>
                 </div>
             </div>
@@ -1068,15 +1071,15 @@
             if (mod === 'aspirantes') {
                 modAsp.classList.remove('hidden');
                 modAut.classList.add('hidden');
-                tabAsp.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400";
-                tabAut.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center bg-purple-900/60 hover:bg-purple-700 text-purple-100 border border-purple-600";
+                tabAsp.className = "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400 whitespace-nowrap";
+                tabAut.className = "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center bg-purple-900/60 hover:bg-purple-700 text-purple-100 border border-purple-600 whitespace-nowrap";
                 if (btnText) btnText.innerText = "Nuevo Aspirante";
                 goHome();
             } else {
                 modAsp.classList.add('hidden');
                 modAut.classList.remove('hidden');
-                tabAut.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400";
-                tabAsp.className = "px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center bg-purple-900/60 hover:bg-purple-700 text-purple-100 border border-purple-600";
+                tabAut.className = "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition flex items-center justify-center shadow-sm bg-purple-600 text-white ring-1 ring-purple-400 whitespace-nowrap";
+                tabAsp.className = "px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-medium transition flex items-center justify-center bg-purple-900/60 hover:bg-purple-700 text-purple-100 border border-purple-600 whitespace-nowrap";
                 if (btnText) btnText.innerText = (appState.autoridadesSubTab === 'sedes') ? "Nueva Sede" : "Nueva Autoridad";
                 backToAutoridadesDashboard();
             }
