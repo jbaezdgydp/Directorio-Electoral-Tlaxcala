@@ -723,11 +723,12 @@
                             <option value="Direcciones Ejecutivas y Áreas Técnicas (ITE)">Direcciones Ejecutivas y Áreas Técnicas (ITE)</option>
                             <option value="Consejo Distrital Electoral (ITE)">Consejo Distrital Electoral (ITE)</option>
                             <option value="Consejo Municipal Electoral">Consejo Municipal Electoral</option>
+                            <option value="Mesa Directiva de Casilla">Mesa Directiva de Casilla</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Ámbito / Distrito</label>
-                        <select id="formAutAmbito" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
+                        <select id="formAutAmbito" onchange="handleAutoridadAmbitoChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm">
                             <option value="Estatal / Oficinas Centrales">Estatal / Oficinas Centrales</option>
                             <option value="Distrito Federal 01">Distrito Federal 01</option>
                             <option value="Distrito Federal 02">Distrito Federal 02</option>
@@ -748,13 +749,80 @@
                             <option value="Distrito Local 14">Distrito Local 14</option>
                             <option value="Distrito Local 15">Distrito Local 15</option>
                             <option value="Municipal">Municipal</option>
+                            <option value="Casilla">Casilla</option>
                         </select>
-                        <!-- Contenedor dinámico del Municipio -->
+                        <!-- Contenedor dinámico del Municipio (para Consejo Municipal) -->
                         <div id="containerAutMunicipio" class="hidden mt-2 bg-purple-50 p-2 rounded border border-purple-100">
                             <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Seleccionar Municipio</label>
                             <select id="formAutMunicipioSelect" class="w-full border border-gray-300 rounded-md px-3 py-1 text-sm">
                                 <option value="">Selecciona el municipio...</option>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL DINÁMICO DE ASIGNACIÓN / ALTA DE CASILLA ELECTORAL -->
+                <div id="containerAutCasilla" class="hidden bg-purple-50 p-4 rounded-lg border border-purple-200 space-y-3">
+                    <div class="flex items-center justify-between border-b border-purple-200 pb-2">
+                        <span class="text-xs font-bold text-purple-900 uppercase"><i class="fas fa-vote-yea mr-1.5"></i>Asignación de Casilla Electoral</span>
+                        <span class="text-[11px] text-purple-700">Selecciona una casilla existente o registra una nueva</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        <div>
+                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">1. Filtrar Sección Electoral</label>
+                            <select id="formAutFiltroSeccionCasilla" onchange="filtrarSelectorCasillasPorSeccion()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="Todas">Todas las secciones registradas</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">2. Casilla Electoral (`ID_Casilla`)</label>
+                            <select id="formAutIdCasillaSelect" onchange="handleSeleccionIdCasillaChange()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="__NUEVA__">+ Registrar nueva casilla en el catálogo...</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Sub-formulario si la casilla aún no existe en la tabla Casillas_Electorales -->
+                    <div id="subFormNuevaCasilla" class="grid grid-cols-1 md:grid-cols-4 gap-3 pt-2 border-t border-purple-200">
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Municipio *</label>
+                            <select id="formAutCasillaMunicipio" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="">Selecciona...</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">No. Sección *</label>
+                            <input type="number" id="formAutCasillaSeccion" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Ej. 124">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Tipo de Sección</label>
+                            <select id="formAutCasillaTipoSeccion" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="Urbana">Urbana</option>
+                                <option value="No Urbana">No Urbana</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Tipo de Casilla</label>
+                            <select id="formAutCasillaTipo" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="Básica">Básica</option>
+                                <option value="Contigua 1">Contigua 1</option>
+                                <option value="Contigua 2">Contigua 2</option>
+                                <option value="Contigua 3">Contigua 3</option>
+                                <option value="Contigua 4">Contigua 4</option>
+                                <option value="Contigua 5">Contigua 5</option>
+                                <option value="Contigua 6">Contigua 6</option>
+                                <option value="Especial 1">Especial 1</option>
+                                <option value="Extraordinaria 1">Extraordinaria 1</option>
+                            </select>
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Ubicación (Escuela / Lugar)</label>
+                            <input type="text" id="formAutCasillaUbicacion" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Ej. Escuela Primaria Vicente Guerrero">
+                        </div>
+                        <div class="md:col-span-2">
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Domicilio / Referencia</label>
+                            <input type="text" id="formAutCasillaDomicilio" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Calle, número, localidad, C.P.">
                         </div>
                     </div>
                 </div>
@@ -791,43 +859,18 @@
                                 <option value="Fórmula 6">Fórmula 6</option>
                             </select>
                         </div>
-                        <!-- Contenedor dinámico de Casilla para Funcionario de Mesa Directiva -->
-                        <div id="containerAutCasilla" class="hidden mt-2 bg-purple-50 p-3 rounded border border-purple-100 space-y-3">
-                            <div>
-                                <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Municipio de la Casilla</label>
-                                <select id="formAutCasillaMunicipio" class="w-full border border-gray-300 rounded-md px-3 py-1 text-sm">
-                                    <option value="">Selecciona el municipio...</option>
-                                </select>
-                            </div>
-                            <div class="grid grid-cols-2 gap-2">
-                                <div>
-                                    <label class="block text-xs font-bold text-purple-700 uppercase mb-1">No. Sección</label>
-                                    <input type="number" id="formAutCasillaSeccion" class="w-full border border-gray-300 rounded-md px-3 py-1 text-sm" placeholder="Ej. 124">
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Tipo de Sección</label>
-                                    <select id="formAutCasillaTipoSeccion" class="w-full border border-gray-300 rounded-md px-3 py-1 text-sm">
-                                        <option value="Urbana">Urbana</option>
-                                        <option value="No Urbana">No Urbana</option>
-                                    </select>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Tipo de Casilla</label>
-                                <select id="formAutCasillaTipo" class="w-full border border-gray-300 rounded-md px-3 py-1 text-sm">
-                                    <option value="Básica">Básica</option>
-                                    <option value="Contigua 1">Contigua 1</option>
-                                    <option value="Contigua 2">Contigua 2</option>
-                                    <option value="Contigua 3">Contigua 3</option>
-                                    <option value="Contigua 4">Contigua 4</option>
-                                    <option value="Contigua 5">Contigua 5</option>
-                                    <option value="Contigua 6">Contigua 6</option>
-                                    <option value="Especial 1">Especial 1</option>
-                                    <option value="Extraordinaria 1">Extraordinaria 1</option>
-                                </select>
-                            </div>
+                        <!-- Contenedor dinámico del Cargo específico dentro de la Mesa Directiva de Casilla -->
+                        <div id="containerAutRolCasilla" class="hidden mt-2 bg-purple-50 p-2 rounded border border-purple-100">
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Cargo en la Casilla *</label>
+                            <select id="formAutRolCasillaSelect" class="w-full border border-gray-300 rounded-md px-3 py-1 text-sm bg-white">
+                                <option value="Presidenta/e">Presidenta/e</option>
+                                <option value="Secretaria/o">Secretaria/o</option>
+                                <option value="1er Escrutador/a">1er Escrutador/a</option>
+                                <option value="2do Escrutador/a">2do Escrutador/a</option>
+                                <option value="3er Escrutador/a">3er Escrutador/a</option>
+                                <option value="Suplente General">Suplente General</option>
+                            </select>
                         </div>
-
                     </div>
                     <div>
                         <label class="block text-xs font-bold text-gray-700 uppercase mb-1">Calidad de Participación</label>
@@ -980,6 +1023,7 @@
             aspirantes: [], 
             autoridades: [],
             sedes: [],
+            casillas: [],
             currentView: 'dashboard', 
             selectedAspiranteId: null, 
             selectedAutoridadId: null,
@@ -1649,6 +1693,7 @@
                     appState.aspirantes = ordenarAspirantes(data.aspirantes || []);
                     appState.autoridades = ordenarAutoridades(data.autoridades || []);
                     appState.sedes = data.sedes || [];
+                    appState.casillas = data.casillas || [];
                 }
 
                 populateAutoridadesDynamicFilters();
@@ -1759,11 +1804,107 @@
             render(); 
         }
 
+        function inicializarSelectoresCasillaModal() {
+            const selectMuni = document.getElementById('formAutCasillaMunicipio');
+            if (selectMuni && selectMuni.options.length <= 1) {
+                MUNICIPIOS.forEach(m => {
+                    selectMuni.innerHTML += `<option value="${m}">${m}</option>`;
+                });
+            }
+
+            const selectSeccionFiltro = document.getElementById('formAutFiltroSeccionCasilla');
+            if (!selectSeccionFiltro) return;
+
+            const seccionesMap = new Map();
+            (appState.casillas || []).forEach(c => {
+                const sec = String(c.noSeccion || '').trim();
+                if (sec && !seccionesMap.has(sec)) {
+                    seccionesMap.set(sec, c.municipio || '');
+                }
+            });
+
+            const seccionesOrdenadas = Array.from(seccionesMap.keys()).sort((a, b) => Number(a) - Number(b));
+            selectSeccionFiltro.innerHTML = '<option value="Todas">Todas las secciones (' + seccionesOrdenadas.length + ')</option>';
+            seccionesOrdenadas.forEach(sec => {
+                const mun = seccionesMap.get(sec);
+                selectSeccionFiltro.innerHTML += `<option value="${sec}">Sección ${sec}${mun ? ' - ' + mun : ''}</option>`;
+            });
+
+            filtrarSelectorCasillasPorSeccion();
+        }
+
+        function filtrarSelectorCasillasPorSeccion() {
+            const secFiltro = document.getElementById('formAutFiltroSeccionCasilla')?.value || 'Todas';
+            const selectIdCasilla = document.getElementById('formAutIdCasillaSelect');
+            if (!selectIdCasilla) return;
+
+            const casillasFiltradas = (appState.casillas || []).filter(c => {
+                return secFiltro === 'Todas' || String(c.noSeccion).trim() === String(secFiltro).trim();
+            });
+
+            selectIdCasilla.innerHTML = '';
+            casillasFiltradas.forEach(c => {
+                const etiqueta = `[${c.idCasilla}] Secc. ${c.noSeccion} (${c.tipoSeccion || 'Urbana'}) - ${c.tipoCasilla || 'Básica'} | ${c.municipio || ''}`;
+                selectIdCasilla.innerHTML += `<option value="${c.idCasilla}">${etiqueta}</option>`;
+            });
+            selectIdCasilla.innerHTML += `<option value="__NUEVA__">+ Registrar nueva casilla en el catálogo...</option>`;
+
+            if (secFiltro !== 'Todas' && document.getElementById('formAutCasillaSeccion')) {
+                document.getElementById('formAutCasillaSeccion').value = secFiltro;
+            }
+
+            handleSeleccionIdCasillaChange();
+        }
+
+        function handleSeleccionIdCasillaChange() {
+            const val = document.getElementById('formAutIdCasillaSelect')?.value;
+            const subForm = document.getElementById('subFormNuevaCasilla');
+            if (!subForm) return;
+
+            if (val === '__NUEVA__' || !val) {
+                subForm.classList.remove('hidden');
+            } else {
+                subForm.classList.add('hidden');
+            }
+        }
+
+        function actualizarVisibilidadPanelCasilla() {
+            const organo = document.getElementById('formAutOrgano').value;
+            const ambito = document.getElementById('formAutAmbito').value;
+            const puesto = document.getElementById('formAutPuesto').value;
+            const containerCasilla = document.getElementById('containerAutCasilla');
+            const containerRolCasilla = document.getElementById('containerAutRolCasilla');
+
+            const esModoCasilla = (
+                organo === 'Mesa Directiva de Casilla' ||
+                ambito === 'Casilla' ||
+                puesto === 'Funcionario de Mesa Directiva de Casilla'
+            );
+
+            if (containerCasilla) {
+                if (esModoCasilla) {
+                    containerCasilla.classList.remove('hidden');
+                    inicializarSelectoresCasillaModal();
+                } else {
+                    containerCasilla.classList.add('hidden');
+                }
+            }
+
+            if (containerRolCasilla) {
+                if (puesto === 'Funcionario de Mesa Directiva de Casilla') {
+                    containerRolCasilla.classList.remove('hidden');
+                } else {
+                    containerRolCasilla.classList.add('hidden');
+                }
+            }
+        }
+
         function handleAutoridadOrganoChange() {
             const organo = document.getElementById('formAutOrgano').value;
             const containerMun = document.getElementById('containerAutMunicipio');
             const selectMun = document.getElementById('formAutMunicipioSelect');
             const selectAmbito = document.getElementById('formAutAmbito');
+            const selectPuesto = document.getElementById('formAutPuesto');
 
             selectMun.innerHTML = '<option value="">Selecciona el municipio...</option>';
             containerMun.classList.add('hidden');
@@ -1775,35 +1916,52 @@
                 MUNICIPIOS.forEach(m => {
                     selectMun.innerHTML += `<option value="${m}">${m}</option>`;
                 });
+            } else if (organo === 'Mesa Directiva de Casilla') {
+                selectAmbito.value = 'Casilla';
+                if (selectPuesto && !selectPuesto.value) {
+                    selectPuesto.value = 'Funcionario de Mesa Directiva de Casilla';
+                }
             }
+
+            actualizarVisibilidadPanelCasilla();
+        }
+
+        function handleAutoridadAmbitoChange() {
+            const ambito = document.getElementById('formAutAmbito').value;
+            const selectOrgano = document.getElementById('formAutOrgano');
+            const selectPuesto = document.getElementById('formAutPuesto');
+
+            if (ambito === 'Casilla') {
+                if (selectOrgano && selectOrgano.value !== 'Mesa Directiva de Casilla') {
+                    selectOrgano.value = 'Mesa Directiva de Casilla';
+                }
+                if (selectPuesto && !selectPuesto.value) {
+                    selectPuesto.value = 'Funcionario de Mesa Directiva de Casilla';
+                }
+            }
+            actualizarVisibilidadPanelCasilla();
         }
 
         function handleAutoridadPuestoChange() {
             const puesto = document.getElementById('formAutPuesto').value;
             const containerFormula = document.getElementById('containerAutFormula');
             const selectFormula = document.getElementById('formAutFormulaSelect');
-            const containerCasilla = document.getElementById('containerAutCasilla');
+            const selectOrgano = document.getElementById('formAutOrgano');
+            const selectAmbito = document.getElementById('formAutAmbito');
 
             if (puesto === 'Consejera/o Electoral') {
                 containerFormula.classList.remove('hidden');
-                if (containerCasilla) containerCasilla.classList.add('hidden');
-            } else if (puesto === 'Funcionario de Mesa Directiva de Casilla') {
-                containerFormula.classList.add('hidden');
-                selectFormula.value = '';
-                if (containerCasilla) {
-                    containerCasilla.classList.remove('hidden');
-                    const selectMuniCasilla = document.getElementById('formAutCasillaMunicipio');
-                    if (selectMuniCasilla && selectMuniCasilla.options.length <= 1) {
-                        MUNICIPIOS.forEach(m => {
-                            selectMuniCasilla.innerHTML += `<option value="${m}">${m}</option>`;
-                        });
-                    }
-                }
             } else {
                 containerFormula.classList.add('hidden');
                 selectFormula.value = '';
-                if (containerCasilla) containerCasilla.classList.add('hidden');
             }
+
+            if (puesto === 'Funcionario de Mesa Directiva de Casilla') {
+                if (selectOrgano && !selectOrgano.value) selectOrgano.value = 'Mesa Directiva de Casilla';
+                if (selectAmbito) selectAmbito.value = 'Casilla';
+            }
+
+            actualizarVisibilidadPanelCasilla();
         }
 
         function handleCargoChange() {
@@ -2268,73 +2426,74 @@
         }
 
         function populateAutoridadesDynamicFilters() {
-    const selectOrgano = document.getElementById('filterAutOrgano');
-    const selectSede = document.getElementById('filterAutSede');
-    const selectCargo = document.getElementById('filterAutCargo'); // Nuevo
-    const formSelectSede = document.getElementById('formAutIdSede');
+            const selectOrgano = document.getElementById('filterAutOrgano');
+            const selectSede = document.getElementById('filterAutSede');
+            const selectCargo = document.getElementById('filterAutCargo');
+            const formSelectSede = document.getElementById('formAutIdSede');
 
-    if (selectOrgano) {
-        const organosSet = new Set();
-        appState.autoridades.forEach(a => {
-            if (a.organoColegiado && a.organoColegiado.trim() !== '') {
-                organosSet.add(a.organoColegiado.trim());
+            if (selectOrgano) {
+                const organosSet = new Set();
+                appState.autoridades.forEach(a => {
+                    if (a.organoColegiado && a.organoColegiado.trim() !== '') {
+                        organosSet.add(a.organoColegiado.trim());
+                    }
+                });
+                selectOrgano.innerHTML = '<option value="Todos">Todos los órganos</option>';
+                Array.from(organosSet).sort().forEach(org => {
+                    selectOrgano.innerHTML += `<option value="${org}">${org}</option>`;
+                });
             }
-        });
-        selectOrgano.innerHTML = '<option value="Todos">Todos los órganos</option>';
-        Array.from(organosSet).sort().forEach(org => {
-            selectOrgano.innerHTML += `<option value="${org}">${org}</option>`;
-        });
-    }
 
-    if (selectSede) {
-        selectSede.innerHTML = '<option value="Todas">Todas las sedes</option>';
-        appState.sedes.forEach(s => {
-            selectSede.innerHTML += `<option value="${s.idSede}">[${s.institucion}] ${s.nombreSede}</option>`;
-        });
-    }
-
-    // Lógica para llenar el nuevo selector de cargos (corregido)
-    if (selectCargo) {
-        const cargosSet = new Set();
-        appState.autoridades.forEach(a => {
-            if (a.puestoCargo && a.puestoCargo.trim() !== '') {
-                let puestoBase = a.puestoCargo.trim();
-                if (puestoBase.includes(' - Fórmula ')) {
-                    puestoBase = puestoBase.split(' - Fórmula ')[0];
-                } else if (puestoBase.includes(' (Fórmula ')) {
-                    puestoBase = puestoBase.split(' (Fórmula ')[0]; // Corregido el split
-                }
-                cargosSet.add(puestoBase);
+            if (selectSede) {
+                selectSede.innerHTML = '<option value="Todas">Todas las sedes</option>';
+                appState.sedes.forEach(s => {
+                    selectSede.innerHTML += `<option value="${s.idSede}">[${s.institucion}] ${s.nombreSede}</option>`;
+                });
             }
-        });
-        selectCargo.innerHTML = '<option value="Todos">Todos los cargos</option>';
-        Array.from(cargosSet).sort().forEach(cargo => {
-            selectCargo.innerHTML += `<option value="${cargo}">${cargo}</option>`;
-        });
-    }
 
-    if (formSelectSede) {
-        formSelectSede.innerHTML = '<option value="">Sin sede asignada...</option>';
-        appState.sedes.forEach(s => {
-            formSelectSede.innerHTML += `<option value="${s.idSede}">[${s.institucion}] ${s.nombreSede} (${s.cabeceraMunicipio})</option>`;
-        });
-    }
+            if (selectCargo) {
+                const cargosSet = new Set();
+                appState.autoridades.forEach(a => {
+                    if (a.puestoCargo && a.puestoCargo.trim() !== '') {
+                        let puestoBase = a.puestoCargo.trim();
+                        if (puestoBase.startsWith('Funcionario de Mesa Directiva de Casilla')) {
+                            puestoBase = 'Funcionario de Mesa Directiva de Casilla';
+                        } else if (puestoBase.includes(' - Fórmula ')) {
+                            puestoBase = puestoBase.split(' - Fórmula ')[0];
+                        } else if (puestoBase.includes(' (Fórmula ')) {
+                            puestoBase = puestoBase.split(' (Fórmula ')[0];
+                        }
+                        cargosSet.add(puestoBase);
+                    }
+                });
+                selectCargo.innerHTML = '<option value="Todos">Todos los cargos</option>';
+                Array.from(cargosSet).sort().forEach(cargo => {
+                    selectCargo.innerHTML += `<option value="${cargo}">${cargo}</option>`;
+                });
+            }
 
-    const countSedesEl = document.getElementById('countSedesBadge');
-    if (countSedesEl) countSedesEl.innerText = appState.sedes.length;
-}
+            if (formSelectSede) {
+                formSelectSede.innerHTML = '<option value="">Sin sede asignada...</option>';
+                appState.sedes.forEach(s => {
+                    formSelectSede.innerHTML += `<option value="${s.idSede}">[${s.institucion}] ${s.nombreSede} (${s.cabeceraMunicipio})</option>`;
+                });
+            }
+
+            const countSedesEl = document.getElementById('countSedesBadge');
+            if (countSedesEl) countSedesEl.innerText = appState.sedes.length;
+        }
 
         function limpiarFiltrosAutoridades() {
-    document.getElementById('filterAutText').value = '';
-    document.getElementById('filterAutInstitucion').value = 'Todas';
-    document.getElementById('filterAutOrgano').value = 'Todos';
-    document.getElementById('filterAutSede').value = 'Todas';
-    document.getElementById('filterAutCargo').value = 'Todos'; // <-- NUEVO
-    document.getElementById('filterAutParticipacion').value = 'Todas';
-    document.getElementById('filterAutCondicion').value = 'Todas';
-    document.getElementById('filterAutEstatus').value = 'Todos';
-    renderAutoridades();
-}
+            document.getElementById('filterAutText').value = '';
+            document.getElementById('filterAutInstitucion').value = 'Todas';
+            document.getElementById('filterAutOrgano').value = 'Todos';
+            document.getElementById('filterAutSede').value = 'Todas';
+            document.getElementById('filterAutCargo').value = 'Todos';
+            document.getElementById('filterAutParticipacion').value = 'Todas';
+            document.getElementById('filterAutCondicion').value = 'Todas';
+            document.getElementById('filterAutEstatus').value = 'Todos';
+            renderAutoridades();
+        }
 
         function obtenerSedePorId(idSede) {
             if (!idSede) return null;
@@ -2342,138 +2501,136 @@
         }
 
         function renderAutoridades() {
-    const grid = document.getElementById('autoridadesGrid');
-    if (!grid) return;
+            const grid = document.getElementById('autoridadesGrid');
+            if (!grid) return;
 
-    const q = (document.getElementById('filterAutText')?.value || '').toLowerCase();
-    const inst = document.getElementById('filterAutInstitucion')?.value || 'Todas';
-    const org = document.getElementById('filterAutOrgano')?.value || 'Todos';
-    const sede = document.getElementById('filterAutSede')?.value || 'Todas';
-    const cargoFiltro = document.getElementById('filterAutCargo')?.value || 'Todos'; // <-- NUEVO: Captura el valor del select de cargo
-    const part = document.getElementById('filterAutParticipacion')?.value || 'Todas';
-    const cond = document.getElementById('filterAutCondicion')?.value || 'Todas';
-    const est = document.getElementById('filterAutEstatus')?.value || 'Todos';
+            const q = (document.getElementById('filterAutText')?.value || '').toLowerCase();
+            const inst = document.getElementById('filterAutInstitucion')?.value || 'Todas';
+            const org = document.getElementById('filterAutOrgano')?.value || 'Todos';
+            const sede = document.getElementById('filterAutSede')?.value || 'Todas';
+            const cargoFiltro = document.getElementById('filterAutCargo')?.value || 'Todos';
+            const part = document.getElementById('filterAutParticipacion')?.value || 'Todas';
+            const cond = document.getElementById('filterAutCondicion')?.value || 'Todas';
+            const est = document.getElementById('filterAutEstatus')?.value || 'Todos';
 
-    let filtradas = appState.autoridades.filter(a => {
-        const targetText = `${a.nombreCompleto || ''} ${a.puestoCargo || ''} ${a.organoColegiado || ''} ${a.ambitoDistrito || ''} ${a.correoElectronico || ''} ${a.partidoOrganizacion || ''}`.toLowerCase();
-        const matchText = targetText.includes(q);
-        const matchInst = inst === 'Todas' || a.institucion === inst;
-        const matchOrg = org === 'Todos' || a.organoColegiado === org;
-        const matchSede = sede === 'Todas' || a.idSede === sede;
-        
-        // <-- NUEVO: Valida que coincida con el cargo seleccionado (incluso si tiene fórmula)
-        let matchCargo = true;
-        if (cargoFiltro !== 'Todos') {
-            const puestoA = a.puestoCargo || '';
-            matchCargo = puestoA === cargoFiltro || puestoA.startsWith(cargoFiltro + ' -') || puestoA.startsWith(cargoFiltro + ' (');
-        }
-
-        const matchPart = part === 'Todas' || a.calidadParticipacion === part;
-        const matchCond = cond === 'Todas' || a.condicion === cond;
-        const matchEst = est === 'Todos' || (a.estatus || 'Activo') === est;
-
-        // <-- Actualizado para incluir matchCargo en la evaluación
-        return matchText && matchInst && matchOrg && matchSede && matchCargo && matchPart && matchCond && matchEst;
-    });
-
-    filtradas = ordenarAutoridades(filtradas);
-
-    const countEl = document.getElementById('totalAutoridadesCount');
-    if (countEl) {
-        countEl.innerText = filtradas.length === appState.autoridades.length
-            ? `${appState.autoridades.length} registrados`
-            : `Mostrando ${filtradas.length} de ${appState.autoridades.length}`;
-    }
-
-    if (filtradas.length === 0) {
-        grid.innerHTML = `
-        <div class="col-span-full py-12 text-center bg-white rounded-lg border border-gray-200">
-            <i class="fas fa-landmark text-gray-300 text-5xl mb-4 block"></i>
-            <p class="text-gray-500 font-medium text-lg">No se encontraron autoridades con los filtros seleccionados.</p>
-        </div>`;
-        return;
-    }
-
-    let html = '';
-    filtradas.forEach(aut => {
-        const nombreAutSeguro = escaparHTML(aut.nombreCompleto);
-        const institucionAutSegura = escaparHTML(aut.institucion || 'N/A');
-        const calidadAutSegura = escaparHTML(aut.calidadParticipacion);
-        const condicionAutSegura = escaparHTML(aut.condicion);
-        const puestoAutSeguro = escaparHTML(aut.puestoCargo);
-        const organoAutSeguro = escaparHTML(aut.organoColegiado || 'N/A');
-        const ambitoAutSeguro = escaparHTML(aut.ambitoDistrito);
-        const partidoAutSeguro = escaparHTML(aut.partidoOrganizacion);
-        const telefonoAutSeguro = escaparHTML(aut.telefonoDirecto ? `${aut.telefonoDirecto}${aut.extension ? ' ext. ' + aut.extension : ''}` : '');
-        const correoAutSeguro = escaparHTML(aut.correoElectronico);
-        const inicialAutSegura = escaparHTML(String(aut.nombreCompleto || '?').charAt(0).toUpperCase());
-        const isINE = (aut.institucion || '').toUpperCase() === 'INE';
-        const instBadgeClass = isINE ? 'bg-pink-100 text-pink-800 border border-pink-200' : 'bg-amber-100 text-amber-800 border border-amber-200';
-
-        let avatarHtml = `<div class="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xl flex-shrink-0">${inicialAutSegura}</div>`;
-
-        if (aut.foto && String(aut.foto).trim() !== '') {
-            let fotoAutSegura = null;
-            try {
-                const urlFoto = new URL(String(aut.foto).trim());
-                if (['https:', 'http:'].includes(urlFoto.protocol) && urlFoto.hostname && !urlFoto.username && !urlFoto.password) {
-                    fotoAutSegura = escaparHTML(urlFoto.href);
+            let filtradas = appState.autoridades.filter(a => {
+                const targetText = `${a.nombreCompleto || ''} ${a.puestoCargo || ''} ${a.organoColegiado || ''} ${a.ambitoDistrito || ''} ${a.correoElectronico || ''} ${a.partidoOrganizacion || ''}`.toLowerCase();
+                const matchText = targetText.includes(q);
+                const matchInst = inst === 'Todas' || a.institucion === inst;
+                const matchOrg = org === 'Todos' || a.organoColegiado === org;
+                const matchSede = sede === 'Todas' || a.idSede === sede;
+                
+                let matchCargo = true;
+                if (cargoFiltro !== 'Todos') {
+                    const puestoA = a.puestoCargo || '';
+                    matchCargo = puestoA === cargoFiltro || puestoA.startsWith(cargoFiltro + ' -') || puestoA.startsWith(cargoFiltro + ' (');
                 }
-            } catch (error) {
-                fotoAutSegura = null;
+
+                const matchPart = part === 'Todas' || a.calidadParticipacion === part;
+                const matchCond = cond === 'Todas' || a.condicion === cond;
+                const matchEst = est === 'Todos' || (a.estatus || 'Activo') === est;
+
+                return matchText && matchInst && matchOrg && matchSede && matchCargo && matchPart && matchCond && matchEst;
+            });
+
+            filtradas = ordenarAutoridades(filtradas);
+
+            const countEl = document.getElementById('totalAutoridadesCount');
+            if (countEl) {
+                countEl.innerText = filtradas.length === appState.autoridades.length
+                    ? `${appState.autoridades.length} registrados`
+                    : `Mostrando ${filtradas.length} de ${appState.autoridades.length}`;
             }
 
-            if (fotoAutSegura) {
-                avatarHtml = `<img src="${fotoAutSegura}" class="h-14 w-14 rounded-xl object-cover bg-gray-100 border border-gray-200 flex-shrink-0" alt="Fotografía de autoridad electoral">`;
+            if (filtradas.length === 0) {
+                grid.innerHTML = `
+                <div class="col-span-full py-12 text-center bg-white rounded-lg border border-gray-200">
+                    <i class="fas fa-landmark text-gray-300 text-5xl mb-4 block"></i>
+                    <p class="text-gray-500 font-medium text-lg">No se encontraron autoridades con los filtros seleccionados.</p>
+                </div>`;
+                return;
             }
-        }
 
-        const sedeObj = obtenerSedePorId(aut.idSede);
-        const sedeNombre = sedeObj ? sedeObj.nombreSede : (aut.idSede || 'Sin sede especificada');
-        const telCompleto = aut.telefonoDirecto ? `${aut.telefonoDirecto}${aut.extension ? ' ext. ' + aut.extension : ''}` : '';
+            let html = '';
+            filtradas.forEach(aut => {
+                const nombreAutSeguro = escaparHTML(aut.nombreCompleto);
+                const institucionAutSegura = escaparHTML(aut.institucion || 'N/A');
+                const calidadAutSegura = escaparHTML(aut.calidadParticipacion);
+                const condicionAutSegura = escaparHTML(aut.condicion);
+                const puestoAutSeguro = escaparHTML(aut.puestoCargo);
+                const organoAutSeguro = escaparHTML(aut.organoColegiado || 'N/A');
+                const ambitoAutSeguro = escaparHTML(aut.ambitoDistrito);
+                const partidoAutSeguro = escaparHTML(aut.partidoOrganizacion);
+                const telefonoAutSeguro = escaparHTML(aut.telefonoDirecto ? `${aut.telefonoDirecto}${aut.extension ? ' ext. ' + aut.extension : ''}` : '');
+                const correoAutSeguro = escaparHTML(aut.correoElectronico);
+                const inicialAutSegura = escaparHTML(String(aut.nombreCompleto || '?').charAt(0).toUpperCase());
+                const isINE = (aut.institucion || '').toUpperCase() === 'INE';
+                const instBadgeClass = isINE ? 'bg-pink-100 text-pink-800 border border-pink-200' : 'bg-amber-100 text-amber-800 border border-amber-200';
 
-        html += `
-        <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-200 overflow-hidden cursor-pointer flex flex-col justify-between break-inside-avoid" data-autoridad-id="${escaparHTML(aut.id)}">
-            <div class="p-5">
-                <div class="flex items-start space-x-4 mb-3">
-                    ${avatarHtml}
-                    <div class="flex-1 min-w-0">
-                        <div class="flex flex-wrap items-center gap-1 mb-1">
-                            <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase ${instBadgeClass}">${institucionAutSegura}</span>
-                            ${aut.calidadParticipacion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${calidadAutSegura}</span>` : ''}
-                            ${aut.condicion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700">${condicionAutSegura}</span>` : ''}
+                let avatarHtml = `<div class="h-14 w-14 rounded-xl bg-purple-100 flex items-center justify-center text-purple-700 font-bold text-xl flex-shrink-0">${inicialAutSegura}</div>`;
+
+                if (aut.foto && String(aut.foto).trim() !== '') {
+                    let fotoAutSegura = null;
+                    try {
+                        const urlFoto = new URL(String(aut.foto).trim());
+                        if (['https:', 'http:'].includes(urlFoto.protocol) && urlFoto.hostname && !urlFoto.username && !urlFoto.password) {
+                            fotoAutSegura = escaparHTML(urlFoto.href);
+                        }
+                    } catch (error) {
+                        fotoAutSegura = null;
+                    }
+
+                    if (fotoAutSegura) {
+                        avatarHtml = `<img src="${fotoAutSegura}" class="h-14 w-14 rounded-xl object-cover bg-gray-100 border border-gray-200 flex-shrink-0" alt="Fotografía de autoridad electoral">`;
+                    }
+                }
+
+                const sedeObj = obtenerSedePorId(aut.idSede);
+                const sedeNombre = sedeObj ? sedeObj.nombreSede : (aut.idSede || 'Sin sede especificada');
+                const telCompleto = aut.telefonoDirecto ? `${aut.telefonoDirecto}${aut.extension ? ' ext. ' + aut.extension : ''}` : '';
+
+                html += `
+                <div class="bg-white rounded-xl shadow-sm hover:shadow-md transition duration-200 border border-gray-200 overflow-hidden cursor-pointer flex flex-col justify-between break-inside-avoid" data-autoridad-id="${escaparHTML(aut.id)}">
+                    <div class="p-5">
+                        <div class="flex items-start space-x-4 mb-3">
+                            ${avatarHtml}
+                            <div class="flex-1 min-w-0">
+                                <div class="flex flex-wrap items-center gap-1 mb-1">
+                                    <span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold uppercase ${instBadgeClass}">${institucionAutSegura}</span>
+                                    ${aut.calidadParticipacion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-100">${calidadAutSegura}</span>` : ''}
+                                    ${aut.condicion ? `<span class="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium bg-gray-100 text-gray-700">${condicionAutSegura}</span>` : ''}
+                                </div>
+                                <h3 class="text-base font-bold text-gray-900 leading-snug">${nombreAutSeguro}</h3>
+                                <p class="text-xs font-semibold text-purple-700 mt-0.5">${puestoAutSeguro}</p>
+                            </div>
                         </div>
-                        <h3 class="text-base font-bold text-gray-900 leading-snug">${nombreAutSeguro}</h3>
-                        <p class="text-xs font-semibold text-purple-700 mt-0.5">${puestoAutSeguro}</p>
+
+                        <div class="text-xs text-gray-600 space-y-1.5 mt-3 pt-3 border-t border-gray-100">
+                            <p><i class="fas fa-sitemap w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Órgano:</b> ${organoAutSeguro} ${aut.ambitoDistrito ? `(${ambitoAutSeguro})` : ''}</p>
+                            ${aut.partidoOrganizacion && aut.partidoOrganizacion !== 'No aplica' ? `<p><i class="fas fa-flag w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Partido:</b> ${partidoAutSeguro}</p>` : ''}
+                            ${telCompleto ? `<p><i class="fas fa-phone w-4 text-gray-400 mr-1"></i> ${telefonoAutSeguro}</p>` : ''}
+                            ${aut.correoElectronico ? `<p class="truncate"><i class="fas fa-envelope w-4 text-gray-400 mr-1"></i> ${correoAutSeguro}</p>` : ''}
+                        </div>
                     </div>
-                </div>
 
-                <div class="text-xs text-gray-600 space-y-1.5 mt-3 pt-3 border-t border-gray-100">
-                    <p><i class="fas fa-sitemap w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Órgano:</b> ${organoAutSeguro} ${aut.ambitoDistrito ? `(${ambitoAutSeguro})` : ''}</p>
-                    ${aut.partidoOrganizacion && aut.partidoOrganizacion !== 'No aplica' ? `<p><i class="fas fa-flag w-4 text-gray-400 mr-1"></i> <b class="text-gray-700">Partido:</b> ${partidoAutSeguro}</p>` : ''}
-                    ${telCompleto ? `<p><i class="fas fa-phone w-4 text-gray-400 mr-1"></i> ${telefonoAutSeguro}</p>` : ''}
-                    ${aut.correoElectronico ? `<p class="truncate"><i class="fas fa-envelope w-4 text-gray-400 mr-1"></i> ${correoAutSeguro}</p>` : ''}
-                </div>
-            </div>
+                    <div class="bg-gray-50 px-5 py-2.5 border-t border-gray-100 flex justify-between items-center text-[11px] text-gray-500">
+                        <span class="truncate"><i class="fas fa-building mr-1 text-purple-500"></i> ${escaparHTML(sedeNombre)}</span>
+                        <span class="font-semibold text-purple-700 ml-2 whitespace-nowrap">Ver ficha <i class="fas fa-chevron-right ml-0.5 text-[10px]"></i></span>
+                    </div>
+                </div>`;
+            });
 
-            <div class="bg-gray-50 px-5 py-2.5 border-t border-gray-100 flex justify-between items-center text-[11px] text-gray-500">
-                <span class="truncate"><i class="fas fa-building mr-1 text-purple-500"></i> ${escaparHTML(sedeNombre)}</span>
-                <span class="font-semibold text-purple-700 ml-2 whitespace-nowrap">Ver ficha <i class="fas fa-chevron-right ml-0.5 text-[10px]"></i></span>
-            </div>
-        </div>`;
-    });
-
-    grid.innerHTML = html;
-    grid.onclick = function(event) {
-        const elemento = event.target;
-        if (!(elemento instanceof Element)) return;
-        const tarjeta = elemento.closest('[data-autoridad-id]');
-        if (tarjeta && grid.contains(tarjeta)) {
-            const idAutoridad = tarjeta.dataset.autoridadId;
-            if (idAutoridad) viewAutoridadDetail(idAutoridad);
+            grid.innerHTML = html;
+            grid.onclick = function(event) {
+                const elemento = event.target;
+                if (!(elemento instanceof Element)) return;
+                const tarjeta = elemento.closest('[data-autoridad-id]');
+                if (tarjeta && grid.contains(tarjeta)) {
+                    const idAutoridad = tarjeta.dataset.autoridadId;
+                    if (idAutoridad) viewAutoridadDetail(idAutoridad);
+                }
+            };
         }
-    };
-}
 
         function backToAutoridadesDashboard() {
             appState.selectedAutoridadId = null;
@@ -2820,6 +2977,8 @@
                 document.getElementById('formAutCasillaSeccion').value = "";
                 document.getElementById('formAutCasillaTipoSeccion').value = "Urbana";
                 document.getElementById('formAutCasillaTipo').value = "Básica";
+                document.getElementById('formAutCasillaUbicacion').value = "";
+                document.getElementById('formAutCasillaDomicilio').value = "";
             }
 
             currentAutBase64Image = null;
@@ -2844,19 +3003,23 @@
 
             if (aut.organoColegiado === 'Consejo Municipal Electoral') {
                 document.getElementById('formAutMunicipioSelect').value = aut.ambitoDistrito || "";
+            } else if ((aut.ambitoDistrito || '').startsWith('Casilla')) {
+                document.getElementById('formAutAmbito').value = 'Casilla';
             } else {
                 document.getElementById('formAutAmbito').value = aut.ambitoDistrito || "Estatal / Oficinas Centrales";
             }
 
             let puestoBase = aut.puestoCargo || "";
             let formulaSeleccionada = "";
-            let isCasilla = false;
-            let muniCasilla = "";
-            let seccionCasilla = "";
-            let tipoSeccionCasilla = "Urbana";
-            let tipoCasilla = "Básica";
+            let rolCasillaSeleccionado = "Presidenta/e";
 
-            if (puestoBase.includes(' - Fórmula ')) {
+            if (puestoBase.startsWith('Funcionario de Mesa Directiva de Casilla')) {
+                const partesRol = puestoBase.split(' - ');
+                if (partesRol.length > 1) {
+                    rolCasillaSeleccionado = partesRol[1].split(' (')[0].trim();
+                }
+                puestoBase = 'Funcionario de Mesa Directiva de Casilla';
+            } else if (puestoBase.includes(' - Fórmula ')) {
                 const partes = puestoBase.split(' - Fórmula ');
                 puestoBase = partes[0];
                 formulaSeleccionada = 'Fórmula ' + partes[1];
@@ -2864,16 +3027,6 @@
                 const partes = puestoBase.split(' (Fórmula ');
                 puestoBase = partes[0];
                 formulaSeleccionada = 'Fórmula ' + partes[1].replace(')', '');
-            } else if (puestoBase.startsWith('Funcionario de Mesa Directiva de Casilla')) {
-                isCasilla = true;
-                const match = puestoBase.match(/\(Secc\. (\d+) (Urbana|No Urbana) - Casilla (.+)\)/);
-                if (match) {
-                    seccionCasilla = match[1];
-                    tipoSeccionCasilla = match[2];
-                    tipoCasilla = match[3];
-                }
-                puestoBase = 'Funcionario de Mesa Directiva de Casilla';
-                muniCasilla = aut.ambitoDistrito || "";
             }
 
             seleccionarOpcionAutoridad('formAutPuesto', puestoBase);
@@ -2885,14 +3038,16 @@
                 document.getElementById('formAutFormulaSelect').value = "";
             }
 
-            if (isCasilla && document.getElementById('formAutCasillaMunicipio')) {
-                document.getElementById('formAutCasillaMunicipio').value = muniCasilla;
-                document.getElementById('formAutCasillaSeccion').value = seccionCasilla;
-                document.getElementById('formAutCasillaTipoSeccion').value = tipoSeccionCasilla;
-                document.getElementById('formAutCasillaTipo').value = tipoCasilla;
-            } else if (document.getElementById('formAutCasillaSeccion')) {
-                document.getElementById('formAutCasillaSeccion').value = "";
-                document.getElementById('formAutCasillaMunicipio').value = "";
+            if (puestoBase === 'Funcionario de Mesa Directiva de Casilla') {
+                document.getElementById('formAutRolCasillaSelect').value = rolCasillaSeleccionado;
+                inicializarSelectoresCasillaModal();
+                const selectIdCas = document.getElementById('formAutIdCasillaSelect');
+                if (aut.idCasilla && Array.from(selectIdCas.options).some(o => o.value === aut.idCasilla)) {
+                    selectIdCas.value = aut.idCasilla;
+                } else {
+                    selectIdCas.value = '__NUEVA__';
+                }
+                handleSeleccionIdCasillaChange();
             }
 
             document.getElementById('formAutCalidad').value = aut.calidadParticipacion || "Voz y Voto";
@@ -2915,7 +3070,7 @@
             } else {
                 document.getElementById('autFotoPreview').src = "";
                 document.getElementById('autFotoPreview').classList.add('hidden');
-                document.getElementById('autFotoIcon').classList.remove('hidden');
+                document.getElementById('autFotoIcon').classList.add('hidden');
             }
 
             openModal('autoridadModal');
@@ -2927,6 +3082,9 @@
             const organoFinal = document.getElementById('formAutOrgano').value.trim();
             let puestoFinal = document.getElementById('formAutPuesto').value.trim();
             const formulaVal = document.getElementById('formAutFormulaSelect').value;
+
+            let idCasillaSeleccionada = '';
+            let datosNuevaCasilla = null;
 
             if (organoFinal === 'Consejo Municipal Electoral') {
                 const muniSeleccionado = document.getElementById('formAutMunicipioSelect').value;
@@ -2941,20 +3099,49 @@
                 puestoFinal += ' - ' + formulaVal;
             }
 
-            if (puestoFinal === 'Funcionario de Mesa Directiva de Casilla') {
-                const muniCasilla = document.getElementById('formAutCasillaMunicipio').value;
-                const seccionCasilla = document.getElementById('formAutCasillaSeccion').value.trim();
-                const tipoSeccionCasilla = document.getElementById('formAutCasillaTipoSeccion').value;
-                const tipoCasilla = document.getElementById('formAutCasillaTipo').value;
+            const esModoCasilla = (
+                organoFinal === 'Mesa Directiva de Casilla' ||
+                ambitoFinal === 'Casilla' ||
+                puestoFinal === 'Funcionario de Mesa Directiva de Casilla'
+            );
 
-                if (!muniCasilla || !seccionCasilla) {
-                    alert("Por favor selecciona el municipio y escribe el número de sección electoral de la casilla.");
-                    return;
+            if (esModoCasilla) {
+                const rolEnCasilla = document.getElementById('formAutRolCasillaSelect')?.value || 'Presidenta/e';
+                if (puestoFinal === 'Funcionario de Mesa Directiva de Casilla') {
+                    puestoFinal = `Funcionario de Mesa Directiva de Casilla - ${rolEnCasilla}`;
                 }
 
-                puestoFinal += ` (Secc. ${seccionCasilla} ${tipoSeccionCasilla} - Casilla ${tipoCasilla})`;
-                if (organoFinal !== 'Consejo Municipal Electoral') {
-                    ambitoFinal = muniCasilla;
+                const valorSelectCasilla = document.getElementById('formAutIdCasillaSelect')?.value;
+                if (valorSelectCasilla && valorSelectCasilla !== '__NUEVA__') {
+                    idCasillaSeleccionada = valorSelectCasilla;
+                    const casObj = (appState.casillas || []).find(c => c.idCasilla === idCasillaSeleccionada);
+                    if (casObj) {
+                        ambitoFinal = `Casilla - Secc. ${casObj.noSeccion} (${casObj.tipoCasilla || 'Básica'}) - ${casObj.municipio || ''}`;
+                    } else {
+                        ambitoFinal = `Casilla (${idCasillaSeleccionada})`;
+                    }
+                } else {
+                    const muniCasilla = document.getElementById('formAutCasillaMunicipio').value;
+                    const seccionCasilla = document.getElementById('formAutCasillaSeccion').value.trim();
+                    const tipoSeccionCasilla = document.getElementById('formAutCasillaTipoSeccion').value;
+                    const tipoCasilla = document.getElementById('formAutCasillaTipo').value;
+                    const ubicacionCasilla = document.getElementById('formAutCasillaUbicacion').value.trim();
+                    const domicilioCasilla = document.getElementById('formAutCasillaDomicilio').value.trim();
+
+                    if (!muniCasilla || !seccionCasilla) {
+                        alert("Selecciona una casilla existente o ingresa el Municipio y Número de Sección para registrar la nueva casilla.");
+                        return;
+                    }
+
+                    datosNuevaCasilla = {
+                        municipio: muniCasilla,
+                        noSeccion: seccionCasilla,
+                        tipoSeccion: tipoSeccionCasilla,
+                        tipoCasilla: tipoCasilla,
+                        ubicacion: ubicacionCasilla,
+                        domicilio: domicilioCasilla
+                    };
+                    ambitoFinal = `Casilla - Secc. ${seccionCasilla} (${tipoCasilla}) - ${muniCasilla}`;
                 }
             }
 
@@ -2969,6 +3156,8 @@
                 condicion: document.getElementById('formAutCondicion').value,
                 partidoOrganizacion: document.getElementById('formAutPartido').value,
                 idSede: document.getElementById('formAutIdSede').value,
+                idCasilla: idCasillaSeleccionada,
+                nuevaCasilla: datosNuevaCasilla,
                 estatus: document.getElementById('formAutEstatus').value,
                 telefonoDirecto: document.getElementById('formAutTelefono').value.trim(),
                 extension: document.getElementById('formAutExtension').value.trim(),
@@ -2994,13 +3183,17 @@
 
                 if (res && res.exito) {
                     const auditUser = res.modificadoPor || appState.userName;
+                    const idCasillaFinal = res.idCasilla || payload.idCasilla || '';
+                    if (res.casillaCreada) {
+                        appState.casillas.push(res.casillaCreada);
+                    }
                     if (id) {
                         const idx = appState.autoridades.findIndex(a => a.id === id);
                         if (idx !== -1) {
-                            appState.autoridades[idx] = { ...appState.autoridades[idx], ...payload, foto: res.foto, modificadoPor: auditUser };
+                            appState.autoridades[idx] = { ...appState.autoridades[idx], ...payload, idCasilla: idCasillaFinal, foto: res.foto, modificadoPor: auditUser };
                         }
                     } else {
-                        appState.autoridades.push({ ...payload, id: res.id, foto: res.foto, modificadoPor: auditUser });
+                        appState.autoridades.push({ ...payload, id: res.id, idCasilla: idCasillaFinal, foto: res.foto, modificadoPor: auditUser });
                     }
                     appState.autoridades = ordenarAutoridades(appState.autoridades);
                     populateAutoridadesDynamicFilters();
