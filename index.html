@@ -835,7 +835,33 @@
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Distrito Federal</label>
-                            <input type="text" id="formAutCasillaDistritoFederal" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm" placeholder="Ej. 1) APIZACO">
+                            <select id="formAutCasillaDistritoFederal" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                                <option value="">Selecciona...</option>
+                                <option value="Distrito 1">Distrito 1</option>
+                                <option value="Distrito 2">Distrito 2</option>
+                                <option value="Distrito 3">Distrito 3</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Distrito Local</label>
+                            <select id="formAutCasillaDistritoLocal" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:ring-2 focus:ring-purple-500 focus:outline-none">
+                                <option value="">Selecciona...</option>
+                                <option value="Distrito 1">Distrito 1</option>
+                                <option value="Distrito 2">Distrito 2</option>
+                                <option value="Distrito 3">Distrito 3</option>
+                                <option value="Distrito 4">Distrito 4</option>
+                                <option value="Distrito 5">Distrito 5</option>
+                                <option value="Distrito 6">Distrito 6</option>
+                                <option value="Distrito 7">Distrito 7</option>
+                                <option value="Distrito 8">Distrito 8</option>
+                                <option value="Distrito 9">Distrito 9</option>
+                                <option value="Distrito 10">Distrito 10</option>
+                                <option value="Distrito 11">Distrito 11</option>
+                                <option value="Distrito 12">Distrito 12</option>
+                                <option value="Distrito 13">Distrito 13</option>
+                                <option value="Distrito 14">Distrito 14</option>
+                                <option value="Distrito 15">Distrito 15</option>
+                            </select>
                         </div>
                         <div>
                             <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Distrito Local</label>
@@ -3141,6 +3167,8 @@
                 document.getElementById('formAutCasillaSeccion').value = "";
                 document.getElementById('formAutCasillaTipoSeccion').value = "Urbana";
                 document.getElementById('formAutCasillaTipo').value = "Básica";
+                document.getElementById('formAutCasillaDistritoFederal').value = "";
+                document.getElementById('formAutCasillaDistritoLocal').value = "";
                 document.getElementById('formAutCasillaDomicilio').value = "";
             }
 
