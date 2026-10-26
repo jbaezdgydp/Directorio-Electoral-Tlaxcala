@@ -3326,15 +3326,15 @@
                     }
 
                     datosNuevaCasilla = {
-                        distritoFederal: document.getElementById('formAutCasillaDistritoFederal')?.value.trim() || '',
-                        distritoLocal: document.getElementById('formAutCasillaDistritoLocal')?.value.trim() || '',
+                        distritoFederal: (document.getElementById('formAutCasillaDistritoFederal')?.value || '').trim(),
+                        distritoLocal: (document.getElementById('formAutCasillaDistritoLocal')?.value || '').trim(),
                         municipio: muniCasilla,
-                        localidad: localidadCasilla,
+                        localidad: (document.getElementById('formAutCasillaLocalidad')?.value || '').trim(),
                         noSeccion: seccionCasilla,
                         tipoCasilla: tipoCasilla,
                         domicilio: domicilioCasilla,
-                        ubicacion: document.getElementById('formAutCasillaUbicacion')?.value.trim() || '',
-                        referencia: document.getElementById('formAutCasillaReferencia')?.value.trim() || ''
+                        ubicacion: (document.getElementById('formAutCasillaUbicacion')?.value || '').trim(),
+                        referencia: (document.getElementById('formAutCasillaReferencia')?.value || '').trim()
                     };
                     ambitoFinal = `Casilla - Secc. ${seccionCasilla} (${tipoCasilla}) - ${muniCasilla}`;
                 }
