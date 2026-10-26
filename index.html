@@ -1029,7 +1029,7 @@
 
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbwJ8mDlnK8lwV_K0s5V0uZPqhOqmYGOBoOrbALfOCAK9y4rsmL6ixFGLHaxd7ckbKlJUg/exec";
-
+                         
         let appState = { 
             activeModule: 'aspirantes',
             autoridadesSubTab: 'funcionarios',
@@ -1730,8 +1730,11 @@
             let lastError = null;
             let text = null;
             
-            // BUCLE DE REINTENTO: Protege contra micro-cortes de red y bloqueos de CORS/Navegador
-            for (let intento = 1; intento <= 3; intento++) {
+            // Las escrituras no se reintentan: el servidor pudo haberlas aplicado
+            // aunque la respuesta se perdiera. Solo las consultas admiten reintento.
+            const accionesLectura = ['listarUsuarios'];
+            const maxIntentos = payload && accionesLectura.includes(payload.accion) ? 3 : 1;
+            for (let intento = 1; intento <= maxIntentos; intento++) {
                 try {
                     const response = await fetch(API_URL, {
                         method: 'POST',
@@ -1745,7 +1748,7 @@
                 } catch (err) {
                     lastError = err;
                     console.warn(`Intento ${intento} fallido de conexión a Google. Reintentando...`, err);
-                    if (intento < 3) {
+                    if (intento < maxIntentos) {
                         // Esperar 1.5 segundos antes de lanzar el siguiente intento
                         await new Promise(res => setTimeout(res, 1500));
                     }
@@ -1754,7 +1757,10 @@
 
             // Si después de 3 intentos sigue fallando, lanzamos el error para que la UI avise al usuario
             if (lastError) {
-                throw lastError; 
+                if (payload && payload.accion === 'actualizarAutoridad') {
+                    throw new Error('No se recibió confirmación del servidor. El cambio podría haberse guardado. Comprueba el registro antes de volver a intentarlo. Detalle: ' + (lastError.message || 'Error de conexión'));
+                }
+                throw lastError;
             }
 
             try {
@@ -3310,7 +3316,12 @@
                 }
             }
 
-            const fotoExistente = id ? (appState.autoridades.find(a => a.id === id)?.foto || '') : '';
+            const autoridadExistente = id ? appState.autoridades.find(a => a.id === id) : null;
+            // Conservar la relación existente si el selector no logró cargar esa casilla.
+            if (id && !idCasillaSeleccionada && !datosNuevaCasilla && autoridadExistente?.idCasilla) {
+                idCasillaSeleccionada = autoridadExistente.idCasilla;
+            }
+            const fotoExistente = autoridadExistente?.foto || '';
 
             const payload = {
                 id: id || null,
