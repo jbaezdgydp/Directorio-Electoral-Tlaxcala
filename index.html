@@ -768,23 +768,30 @@
                         <span class="text-[11px] text-purple-700">Selecciona una casilla existente o registra una nueva</span>
                     </div>
 
+                    <!-- NUEVOS FILTROS EN CASCADA (4 NIVELES) -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div>
                             <label class="block text-xs font-bold text-purple-800 uppercase mb-1">1. Municipio</label>
-                            <select id="formAutFiltroMunicipioCasilla" onchange="filtrarSeccionesPorMunicipio()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
-                                <option value="Todos">Todos los municipios</option>
+                            <select id="formAutFiltroMunicipioCasilla" onchange="filtrarLocalidadesPorMunicipio()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="Todos">Todos</option>
                             </select>
                         </div>
                         <div>
-                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">2. Sección</label>
-                            <select id="formAutFiltroSeccionCasilla" onchange="filtrarSelectorCasillasPorSeccion()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
-                                <option value="Todas">Todas las secciones</option>
+                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">2. Localidad</label>
+                            <select id="formAutFiltroLocalidadCasilla" onchange="filtrarSeccionesPorLocalidad()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="Todas">Todas</option>
                             </select>
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">3. Casilla Electoral</label>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">3. Sección</label>
+                            <select id="formAutFiltroSeccionCasilla" onchange="filtrarSelectorCasillasPorSeccion()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
+                                <option value="Todas">Todas</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-800 uppercase mb-1">4. Casilla</label>
                             <select id="formAutIdCasillaSelect" onchange="handleSeleccionIdCasillaChange()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white">
-                                <option value="__NUEVA__">+ Registrar nueva casilla en el catálogo...</option>
+                                <option value="__NUEVA__">+ Nueva casilla...</option>
                             </select>
                         </div>
                     </div>
@@ -1810,89 +1817,145 @@
             render(); 
         }
 
-        function inicializarSelectoresCasillaModal() {
-            // Inicializar el selector de municipio del sub-formulario de nueva casilla
-            const selectMuni = document.getElementById('formAutCasillaMunicipio');
-            if (selectMuni && selectMuni.options.length <= 1) {
-                MUNICIPIOS.forEach(m => {
-                    selectMuni.innerHTML += `<option value="${m}">${m}</option>`;
-                });
+        
+        // Procesador para limpiar las columnas desfasadas del INE
+        function getDatosElectorales(c) {
+            let seccionCol = String(c.noSeccion || '').trim();
+            let municipioCol = String(c.municipio || '').trim();
+            let tipoSecCol = String(c.tipoSeccion || '').trim();
+            let tipoCasCol = String(c.tipoCasilla || '').trim();
+            
+            // 1. Extraer Sección Real (desde el ID CAS_0619_C1)
+            let seccionReal = seccionCol;
+            const matchId = String(c.idCasilla || '').match(/CAS_(\d+)_/);
+            if (matchId) {
+                seccionReal = matchId[1];
+            } else if (!isNaN(parseInt(seccionCol))) {
+                seccionReal = parseInt(seccionCol, 10).toString();
             }
-
-            // Inicializar el nuevo filtro dinámico de Municipio
-            const selectFiltroMunicipio = document.getElementById('formAutFiltroMunicipioCasilla');
-            if (selectFiltroMunicipio && selectFiltroMunicipio.options.length <= 1) {
-                // Obtener solo municipios que actualmente tienen casillas registradas
-                const municipiosConCasillas = [...new Set((appState.casillas || []).map(c => String(c.municipio || '').trim()).filter(Boolean))].sort();
+            
+            let municipioReal = municipioCol;
+            let localidadReal = '';
+            let tipoCasillaReal = tipoCasCol;
+            
+            // 2. Detectar columnas desfasadas (ej. Si tipoSeccion tiene "31) TETLA...")
+            if (tipoSecCol && tipoSecCol !== 'Urbana' && tipoSecCol !== 'No Urbana' && tipoSecCol !== 'Rural') {
+                // Limpiamos los prefijos numéricos como "31) "
+                municipioReal = tipoSecCol.replace(/^\d+\)\s*/, '');
+                localidadReal = tipoCasCol.replace(/^\d+\)\s*/, '');
                 
-                selectFiltroMunicipio.innerHTML = '<option value="Todos">Todos los municipios</option>';
-                municipiosConCasillas.forEach(m => {
-                    selectFiltroMunicipio.innerHTML += `<option value="${m}">${m}</option>`;
-                });
+                // Deducir el tipo de casilla desde el sufijo del ID
+                let sufijo = String(c.idCasilla).split('_').pop() || '';
+                if (sufijo === 'B') tipoCasillaReal = 'Básica';
+                else if (sufijo.startsWith('C')) tipoCasillaReal = 'Contigua ' + sufijo.substring(1);
+                else if (sufijo.startsWith('E') && !sufijo.startsWith('EX')) tipoCasillaReal = 'Especial ' + sufijo.substring(1);
+                else if (sufijo.startsWith('EX')) tipoCasillaReal = 'Extraordinaria ' + sufijo.substring(2);
+                else tipoCasillaReal = sufijo;
+            } else {
+                // Si son datos capturados limpios desde tu formulario
+                municipioReal = municipioCol;
+                localidadReal = String(c.ubicacion || '').trim(); 
+                tipoCasillaReal = tipoCasCol;
             }
-
-            // Llamar a la función que actualiza las secciones basándose en el municipio seleccionado
-            filtrarSeccionesPorMunicipio();
+            
+            return { seccionReal, municipioReal, localidadReal, tipoCasillaReal };
         }
 
-        function filtrarSeccionesPorMunicipio() {
-            const muniFiltro = document.getElementById('formAutFiltroMunicipioCasilla')?.value || 'Todos';
-            const selectSeccionFiltro = document.getElementById('formAutFiltroSeccionCasilla');
-            if (!selectSeccionFiltro) return;
+        // --- PASO 1: Inicializar Municipios ---
+        function inicializarSelectoresCasillaModal() {
+            const selectFiltroMunicipio = document.getElementById('formAutFiltroMunicipioCasilla');
+            if (selectFiltroMunicipio) {
+                const municipiosSet = new Set();
+                (appState.casillas || []).forEach(c => {
+                    const datos = getDatosElectorales(c);
+                    if (datos.municipioReal) municipiosSet.add(datos.municipioReal);
+                });
+                
+                const municipiosOrdenados = Array.from(municipiosSet).sort();
+                selectFiltroMunicipio.innerHTML = '<option value="Todos">Todos los municipios</option>';
+                municipiosOrdenados.forEach(m => selectFiltroMunicipio.innerHTML += `<option value="${m}">${m}</option>`);
+            }
+            filtrarLocalidadesPorMunicipio();
+        }
 
-            const seccionesMap = new Map();
+        // --- PASO 2: Filtrar Localidades ---
+        function filtrarLocalidadesPorMunicipio() {
+            const muniFiltro = document.getElementById('formAutFiltroMunicipioCasilla')?.value || 'Todos';
+            const selectLocalidad = document.getElementById('formAutFiltroLocalidadCasilla');
+            if (!selectLocalidad) return;
+
+            const localidadesSet = new Set();
             (appState.casillas || []).forEach(c => {
-                const mun = String(c.municipio || '').trim();
-                // Mostrar solo las secciones que pertenecen al municipio seleccionado (o a todos si no hay filtro)
-                if (muniFiltro === 'Todos' || mun === muniFiltro) {
-                    const sec = String(c.noSeccion || '').trim();
-                    if (sec && !seccionesMap.has(sec)) {
-                        seccionesMap.set(sec, mun);
-                    }
+                const datos = getDatosElectorales(c);
+                if (muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) {
+                    if (datos.localidadReal) localidadesSet.add(datos.localidadReal);
                 }
             });
 
-            const seccionesOrdenadas = Array.from(seccionesMap.keys()).sort((a, b) => Number(a) - Number(b));
-            selectSeccionFiltro.innerHTML = '<option value="Todas">Todas las secciones (' + seccionesOrdenadas.length + ')</option>';
-            seccionesOrdenadas.forEach(sec => {
-                const mun = seccionesMap.get(sec);
-                selectSeccionFiltro.innerHTML += `<option value="${sec}">Sección ${sec}${mun && muniFiltro === 'Todos' ? ' - ' + mun : ''}</option>`;
+            const localidadesOrdenadas = Array.from(localidadesSet).sort();
+            selectLocalidad.innerHTML = '<option value="Todas">Todas las localidades</option>';
+            localidadesOrdenadas.forEach(loc => selectLocalidad.innerHTML += `<option value="${loc}">${loc}</option>`);
+
+            filtrarSeccionesPorLocalidad();
+        }
+
+        // --- PASO 3: Filtrar Secciones ---
+        function filtrarSeccionesPorLocalidad() {
+            const muniFiltro = document.getElementById('formAutFiltroMunicipioCasilla')?.value || 'Todos';
+            const locFiltro = document.getElementById('formAutFiltroLocalidadCasilla')?.value || 'Todas';
+            const selectSeccion = document.getElementById('formAutFiltroSeccionCasilla');
+            if (!selectSeccion) return;
+
+            const seccionesSet = new Set();
+            (appState.casillas || []).forEach(c => {
+                const datos = getDatosElectorales(c);
+                const matchMuni = muniFiltro === 'Todos' || datos.municipioReal === muniFiltro;
+                const matchLoc = locFiltro === 'Todas' || datos.localidadReal === locFiltro;
+                
+                if (matchMuni && matchLoc && datos.seccionReal) {
+                    seccionesSet.add(datos.seccionReal);
+                }
             });
 
-            // Después de actualizar las secciones, actualizar las casillas
+            const seccionesOrdenadas = Array.from(seccionesSet).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
+            selectSeccion.innerHTML = '<option value="Todas">Todas las secciones</option>';
+            seccionesOrdenadas.forEach(sec => selectSeccion.innerHTML += `<option value="${sec}">Sección ${sec}</option>`);
+
             filtrarSelectorCasillasPorSeccion();
         }
 
+        // --- PASO 4: Filtrar Casillas Finales ---
         function filtrarSelectorCasillasPorSeccion() {
             const muniFiltro = document.getElementById('formAutFiltroMunicipioCasilla')?.value || 'Todos';
+            const locFiltro = document.getElementById('formAutFiltroLocalidadCasilla')?.value || 'Todas';
             const secFiltro = document.getElementById('formAutFiltroSeccionCasilla')?.value || 'Todas';
             const selectIdCasilla = document.getElementById('formAutIdCasillaSelect');
             if (!selectIdCasilla) return;
 
             const casillasFiltradas = (appState.casillas || []).filter(c => {
-                const matchMuni = muniFiltro === 'Todos' || String(c.municipio || '').trim() === String(muniFiltro).trim();
-                const matchSec = secFiltro === 'Todas' || String(c.noSeccion || '').trim() === String(secFiltro).trim();
-                return matchMuni && matchSec;
+                const datos = getDatosElectorales(c);
+                const matchMuni = muniFiltro === 'Todos' || datos.municipioReal === muniFiltro;
+                const matchLoc = locFiltro === 'Todas' || datos.localidadReal === locFiltro;
+                const matchSec = secFiltro === 'Todas' || datos.seccionReal === secFiltro;
+                return matchMuni && matchLoc && matchSec;
             });
 
             selectIdCasilla.innerHTML = '';
-            casillasFiltradas.forEach(c => {
-                const etiqueta = `[${c.idCasilla}] Secc. ${c.noSeccion} (${c.tipoSeccion || 'Urbana'}) - ${c.tipoCasilla || 'Básica'} | ${c.municipio || ''}`;
-                selectIdCasilla.innerHTML += `<option value="${c.idCasilla}">${etiqueta}</option>`;
+            
+            // Ordenar las casillas (Básica primero, luego Contiguas, luego Especiales)
+            casillasFiltradas.sort((a, b) => String(a.idCasilla).localeCompare(String(b.idCasilla))).forEach(c => {
+                const datos = getDatosElectorales(c);
+                // Mostrar ÚNICAMENTE el tipo de casilla limpia
+                selectIdCasilla.innerHTML += `<option value="${c.idCasilla}">${datos.tipoCasillaReal}</option>`;
             });
-            selectIdCasilla.innerHTML += `<option value="__NUEVA__">+ Registrar nueva casilla en el catálogo...</option>`;
+            selectIdCasilla.innerHTML += `<option value="__NUEVA__">+ Registrar nueva casilla...</option>`;
 
-            // Rellenar automáticamente los campos del sub-formulario de "Nueva Casilla" si se selecciona un filtro
+            // Llenar autómaticamente el sub-formulario para casillas nuevas (si se decide agregar manual)
             if (muniFiltro !== 'Todos' && document.getElementById('formAutCasillaMunicipio')) {
                 document.getElementById('formAutCasillaMunicipio').value = muniFiltro;
-            } else if (muniFiltro === 'Todos' && document.getElementById('formAutCasillaMunicipio')) {
-                document.getElementById('formAutCasillaMunicipio').value = "";
             }
-
             if (secFiltro !== 'Todas' && document.getElementById('formAutCasillaSeccion')) {
                 document.getElementById('formAutCasillaSeccion').value = secFiltro;
-            } else if (secFiltro === 'Todas' && document.getElementById('formAutCasillaSeccion')) {
-                document.getElementById('formAutCasillaSeccion').value = "";
             }
 
             handleSeleccionIdCasillaChange();
@@ -3083,24 +3146,23 @@
             if (puestoBase === 'Funcionario de Mesa Directiva de Casilla') {
                 document.getElementById('formAutRolCasillaSelect').value = rolCasillaSeleccionado;
                 
-                // Si la autoridad ya tiene una casilla asignada, ajustamos los filtros en cascada
                 if (aut.idCasilla) {
                     const casillaExistente = appState.casillas.find(c => c.idCasilla === aut.idCasilla);
                     if (casillaExistente) {
+                        const datos = getDatosElectorales(casillaExistente);
+                        
                         const selectFiltroMunicipio = document.getElementById('formAutFiltroMunicipioCasilla');
                         if (selectFiltroMunicipio) {
-                            // Aseguramos que el select tenga los municipios cargados
-                            if (selectFiltroMunicipio.options.length <= 1) {
-                                const municipiosConCasillas = [...new Set((appState.casillas || []).map(c => String(c.municipio || '').trim()).filter(Boolean))].sort();
-                                selectFiltroMunicipio.innerHTML = '<option value="Todos">Todos los municipios</option>';
-                                municipiosConCasillas.forEach(m => selectFiltroMunicipio.innerHTML += `<option value="${m}">${m}</option>`);
-                            }
-                            // Pre-seleccionamos
-                            selectFiltroMunicipio.value = casillaExistente.municipio || 'Todos';
-                            filtrarSeccionesPorMunicipio();
+                            if (selectFiltroMunicipio.options.length <= 1) inicializarSelectoresCasillaModal();
+                            selectFiltroMunicipio.value = datos.municipioReal || 'Todos';
+                            filtrarLocalidadesPorMunicipio();
+                            
+                            const selectFiltroLocalidad = document.getElementById('formAutFiltroLocalidadCasilla');
+                            if (selectFiltroLocalidad) selectFiltroLocalidad.value = datos.localidadReal || 'Todas';
+                            filtrarSeccionesPorLocalidad();
                             
                             const selectSeccionFiltro = document.getElementById('formAutFiltroSeccionCasilla');
-                            if (selectSeccionFiltro) selectSeccionFiltro.value = casillaExistente.noSeccion || 'Todas';
+                            if (selectSeccionFiltro) selectSeccionFiltro.value = datos.seccionReal || 'Todas';
                             filtrarSelectorCasillasPorSeccion();
                         }
                     }
@@ -3116,7 +3178,7 @@
                 }
                 handleSeleccionIdCasillaChange();
             }
-            
+
             document.getElementById('formAutCalidad').value = aut.calidadParticipacion || "Voz y Voto";
             document.getElementById('formAutCondicion').value = aut.condicion || "Propietario";
             document.getElementById('formAutPartido').value = aut.partidoOrganizacion || "No aplica";
