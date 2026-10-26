@@ -1726,20 +1726,44 @@
                 return { exito: false, codigo: 'SESION_INVALIDA', mensaje: 'Debes iniciar sesión nuevamente.' };
             }
             const tokenSolicitud = payload && payload.sessionToken ? payload.sessionToken : null;
-            const response = await fetch(API_URL, {
-                method: 'POST',
-                redirect: 'follow',
-                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-                body: JSON.stringify(payload)
-            });
+            
+            let lastError = null;
+            let text = null;
+            
+            // BUCLE DE REINTENTO: Protege contra micro-cortes de red y bloqueos de CORS/Navegador
+            for (let intento = 1; intento <= 3; intento++) {
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        redirect: 'follow', // Necesario para Google Apps Script
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: JSON.stringify(payload)
+                    });
+                    text = await response.text();
+                    lastError = null;
+                    break; // Éxito en la conexión, rompemos el bucle
+                } catch (err) {
+                    lastError = err;
+                    console.warn(`Intento ${intento} fallido de conexión a Google. Reintentando...`, err);
+                    if (intento < 3) {
+                        // Esperar 1.5 segundos antes de lanzar el siguiente intento
+                        await new Promise(res => setTimeout(res, 1500));
+                    }
+                }
+            }
 
-            const text = await response.text();
+            // Si después de 3 intentos sigue fallando, lanzamos el error para que la UI avise al usuario
+            if (lastError) {
+                throw lastError; 
+            }
 
             try {
                 const resultado = JSON.parse(text);
+                
                 if (tokenSolicitud && tokenSolicitud !== appState.sessionToken) {
                     return { exito: false, codigo: 'RESPUESTA_SESION_ANTERIOR', mensaje: 'La respuesta pertenece a una sesión anterior.' };
                 }
+                
                 if (resultado && resultado.codigo === 'SESION_INVALIDA') {
                     if (appState.sessionToken) {
                         appState.sessionToken = null;
