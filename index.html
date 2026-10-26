@@ -1775,8 +1775,11 @@
             try {
                 limpiarCacheDirectorio();
                 await fetchInitialData();
-                if (appState.activeModule === 'autoridades' && appState.autoridadesSubTab === 'sedes') {
-                    renderSedes();
+                // FIX: Le decimos al sistema que actualice la vista en la que estemos
+                if (appState.activeModule === 'autoridades') {
+                    if (appState.autoridadesSubTab === 'sedes') renderSedes();
+                    else if (appState.autoridadesSubTab === 'casillas') renderCasillas(); // ¡Línea clave!
+                    else renderAutoridades();
                 }
             } finally {
                 botones.forEach(boton => {
@@ -1795,7 +1798,7 @@
                 let data = obtenerDatosCacheDirectorio();
 
                 if (!data) {
-                    const response = await fetch(`${API_URL}?accion=obtenerTodo`, {
+                    const response = await fetch(`${API_URL}?accion=obtenerTodo&t=${Date.now()}`, {
                         method: 'GET',
                         redirect: 'follow'
                     });
@@ -4470,4 +4473,3 @@
     </script>
 </body>
 </html>
-
