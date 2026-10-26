@@ -528,16 +528,24 @@
             <!-- SUB-VISTA C: MAPA Y DIRECTORIO DE CASILLAS -->
                 <div id="subViewCasillas" class="hidden space-y-6">
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-4 gap-3">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-map-marked-alt text-purple-600 mr-2"></i>Mapa Estatal de Casillas Electorales</h3>
                                 <p class="text-xs text-gray-500">Ubicación georreferenciada de las casillas en el estado.</p>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <label class="text-xs font-bold text-gray-500 uppercase">Filtrar Mapa:</label>
-                                <select id="mapFilterCasillaMuni" onchange="renderCasillas()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 bg-white">
-                                    <option value="Todos">Todos los municipios</option>
-                                </select>
+                            <div class="flex flex-wrap items-center gap-3">
+                                <div>
+                                    <label class="block text-xs font-bold text-purple-800 uppercase mb-1">1. Municipio:</label>
+                                    <select id="mapFilterCasillaMuni" onchange="mapFiltrarLocalidades()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 bg-white min-w-[160px]">
+                                        <option value="Todos">Todos los municipios</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold text-purple-800 uppercase mb-1">2. Localidad:</label>
+                                    <select id="mapFilterCasillaLoc" onchange="renderCasillas()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 bg-white min-w-[160px]">
+                                        <option value="Todas">Todas las localidades</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
                         <div id="casillasGeneralMapContainer" class="w-full h-[500px] rounded-md border border-gray-300 z-10 relative bg-gray-50"></div>
@@ -2758,6 +2766,9 @@
                 let html = '<option value="Todos">Todos los municipios</option>';
                 Array.from(muniSet).sort().forEach(m => html += `<option value="${m}">${m}</option>`);
                 mapFilterCas.innerHTML = html;
+
+                // Inicializar el filtro secundario de Localidad
+                mapFiltrarLocalidades();
             }
         }
 
@@ -4345,12 +4356,15 @@
             }
 
             const filterMuni = document.getElementById('mapFilterCasillaMuni')?.value || 'Todos';
+            const filterLoc = document.getElementById('mapFilterCasillaLoc')?.value || 'Todas';
             let validPoints = [];
             let html = '';
 
             const casillasFiltradas = appState.casillas.filter(c => {
                 const datos = getDatosElectorales(c);
-                return filterMuni === 'Todos' || datos.municipioReal === filterMuni;
+                const matchMuni = filterMuni === 'Todos' || datos.municipioReal === filterMuni;
+                const matchLoc = filterLoc === 'Todas' || datos.localidadReal === filterLoc;
+                return matchMuni && matchLoc;
             });
 
             // Evitar congelamiento de Chrome: Límite de renderizado de tarjetas HTML a 100
@@ -4470,6 +4484,28 @@
         window.addEventListener('DOMContentLoaded', () => {
             checkSavedSession();
         });
+
+        function mapFiltrarLocalidades() {
+            const muniFiltro = document.getElementById('mapFilterCasillaMuni')?.value || 'Todos';
+            const selectLocalidad = document.getElementById('mapFilterCasillaLoc');
+            if (!selectLocalidad) return;
+            
+            const localidadesSet = new Set();
+            (appState.casillas || []).forEach(c => {
+                const datos = getDatosElectorales(c);
+                if (muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) {
+                    if (datos.localidadReal) localidadesSet.add(datos.localidadReal);
+                }
+            });
+
+            let html = '<option value="Todas">Todas las localidades</option>';
+            Array.from(localidadesSet).sort().forEach(loc => html += `<option value="${loc}">${loc}</option>`);
+            selectLocalidad.innerHTML = html;
+            
+            // Una vez llena la lista de localidades, procedemos a pintar el mapa
+            renderCasillas();
+        }
+
     </script>
 </body>
 </html>
