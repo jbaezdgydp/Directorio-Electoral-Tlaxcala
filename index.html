@@ -4385,15 +4385,21 @@
             const casillasParaMapa = casillasFiltradas.slice(0, maxPinesMapa);
 
             casillasParaMapa.forEach(c => {
-                 const coordsMatch = String(c.coordenadasGps || '').match(/([-+]?\d{1,2}\.\d+)[^\d\-+]+([-+]?\d{1,3}\.\d+)/);
-                if (coordsMatch) {
-                    const lat = parseFloat(coordsMatch[1]);
-                    const lng = parseFloat(coordsMatch[2]);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        const offsetLat = lat + (Math.random() - 0.5) * 0.0003;
-                        const offsetLng = lng + (Math.random() - 0.5) * 0.0003;
-                        validPoints.push({ lat: offsetLat, lng: offsetLng, casilla: c, datos: getDatosElectorales(c) });
-                    }
+                let lat, lng;
+                
+                // Método a prueba de balas: buscar la coma, separar y limpiar caracteres extraños
+                if (c.coordenadasGps && typeof c.coordenadasGps === 'string' && c.coordenadasGps.includes(',')) {
+                    const partes = c.coordenadasGps.split(',');
+                    // Limpiamos todo lo que no sea número, punto o signo negativo
+                    lat = parseFloat(partes[0].replace(/[^0-9.-]/g, ''));
+                    lng = parseFloat(partes[1].replace(/[^0-9.-]/g, ''));
+                }
+
+                if (lat && lng && !isNaN(lat) && !isNaN(lng)) {
+                    // Offset para que si dos casillas están en la misma escuela, se vean ambas chinchetas separadas
+                    const offsetLat = lat + (Math.random() - 0.5) * 0.0003;
+                    const offsetLng = lng + (Math.random() - 0.5) * 0.0003;
+                    validPoints.push({ lat: offsetLat, lng: offsetLng, casilla: c, datos: getDatosElectorales(c) });
                 }
             });
 
@@ -4464,3 +4470,4 @@
     </script>
 </body>
 </html>
+
