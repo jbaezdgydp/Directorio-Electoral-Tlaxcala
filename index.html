@@ -528,21 +528,35 @@
             <!-- SUB-VISTA C: MAPA Y DIRECTORIO DE CASILLAS -->
                 <div id="subViewCasillas" class="hidden space-y-6">
                     <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
-                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-end mb-4 gap-3">
+                       <div class="flex flex-col mb-4 gap-3">
                             <div>
                                 <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-map-marked-alt text-purple-600 mr-2"></i>Mapa Estatal de Casillas Electorales</h3>
                                 <p class="text-xs text-gray-500">Ubicación georreferenciada de las casillas en el estado.</p>
                             </div>
-                            <div class="flex flex-wrap items-center gap-3">
+                            
+                            <!-- NUEVO PANEL DE 4 FILTROS -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full bg-purple-50 p-3 rounded-lg border border-purple-100">
                                 <div>
-                                    <label class="block text-xs font-bold text-purple-800 uppercase mb-1">1. Municipio:</label>
-                                    <select id="mapFilterCasillaMuni" onchange="mapFiltrarLocalidades()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 bg-white min-w-[160px]">
+                                    <label class="block text-[10px] font-bold text-purple-800 uppercase mb-1">Distrito Federal</label>
+                                    <select id="mapFilterCasillaFed" onchange="renderCasillas()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                                        <option value="Todos">Todos</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-purple-800 uppercase mb-1">Distrito Local</label>
+                                    <select id="mapFilterCasillaLocDist" onchange="renderCasillas()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                                        <option value="Todos">Todos</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-[10px] font-bold text-purple-800 uppercase mb-1">Municipio</label>
+                                    <select id="mapFilterCasillaMuni" onchange="mapFiltrarLocalidades()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
                                         <option value="Todos">Todos los municipios</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-xs font-bold text-purple-800 uppercase mb-1">2. Localidad:</label>
-                                    <select id="mapFilterCasillaLoc" onchange="renderCasillas()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 bg-white min-w-[160px]">
+                                    <label class="block text-[10px] font-bold text-purple-800 uppercase mb-1">Localidad</label>
+                                    <select id="mapFilterCasillaLoc" onchange="renderCasillas()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
                                         <option value="Todas">Todas las localidades</option>
                                     </select>
                                 </div>
@@ -2756,17 +2770,43 @@
             const countCasillasEl = document.getElementById('countCasillasBadge');
             if (countCasillasEl) countCasillasEl.innerText = appState.casillas.length;
             
-            const mapFilterCas = document.getElementById('mapFilterCasillaMuni');
+           const mapFilterCas = document.getElementById('mapFilterCasillaMuni');
+            const mapFilterFed = document.getElementById('mapFilterCasillaFed');
+            const mapFilterLocDist = document.getElementById('mapFilterCasillaLocDist');
+            
             if (mapFilterCas && mapFilterCas.options.length <= 1) {
                 const muniSet = new Set();
+                const fedSet = new Set();
+                const locDistSet = new Set();
+
                 appState.casillas.forEach(c => {
                     const datos = getDatosElectorales(c);
                     if (datos.municipioReal) muniSet.add(datos.municipioReal);
+                    if (c.distritoFederal) fedSet.add(c.distritoFederal.trim());
+                    if (c.distritoLocal) locDistSet.add(c.distritoLocal.trim());
                 });
-                let html = '<option value="Todos">Todos los municipios</option>';
-                Array.from(muniSet).sort().forEach(m => html += `<option value="${m}">${m}</option>`);
-                mapFilterCas.innerHTML = html;
 
+                let htmlMuni = '<option value="Todos">Todos los municipios</option>';
+                Array.from(muniSet).sort().forEach(m => htmlMuni += `<option value="${m}">${m}</option>`);
+                mapFilterCas.innerHTML = htmlMuni;
+
+                if (mapFilterFed) {
+                    let htmlFed = '<option value="Todos">Todos</option>';
+                    Array.from(fedSet).filter(Boolean).sort().forEach(d => htmlFed += `<option value="${d}">${d}</option>`);
+                    mapFilterFed.innerHTML = htmlFed;
+                }
+
+                if (mapFilterLocDist) {
+                    let htmlLocDist = '<option value="Todos">Todos</option>';
+                    Array.from(locDistSet).filter(Boolean).sort((a,b) => {
+                        const numA = parseInt(a.replace(/\D/g, ''));
+                        const numB = parseInt(b.replace(/\D/g, ''));
+                        if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                        return a.localeCompare(b);
+                    }).forEach(d => htmlLocDist += `<option value="${d}">${d}</option>`);
+                    mapFilterLocDist.innerHTML = htmlLocDist;
+                }
+                
                 // Inicializar el filtro secundario de Localidad
                 mapFiltrarLocalidades();
             }
@@ -4345,7 +4385,7 @@
             renderAutoridades();
         }
 
-        function renderCasillas() {
+       function renderCasillas() {
             const grid = document.getElementById('casillasGrid');
             const mapDiv = document.getElementById('casillasGeneralMapContainer');
             if (!grid || !mapDiv) return;
@@ -4357,6 +4397,9 @@
 
             const filterMuni = document.getElementById('mapFilterCasillaMuni')?.value || 'Todos';
             const filterLoc = document.getElementById('mapFilterCasillaLoc')?.value || 'Todas';
+            const filterFed = document.getElementById('mapFilterCasillaFed')?.value || 'Todos';
+            const filterLocDist = document.getElementById('mapFilterCasillaLocDist')?.value || 'Todos';
+            
             let validPoints = [];
             let html = '';
 
@@ -4364,10 +4407,12 @@
                 const datos = getDatosElectorales(c);
                 const matchMuni = filterMuni === 'Todos' || datos.municipioReal === filterMuni;
                 const matchLoc = filterLoc === 'Todas' || datos.localidadReal === filterLoc;
-                return matchMuni && matchLoc;
+                const matchFed = filterFed === 'Todos' || (c.distritoFederal && c.distritoFederal.trim() === filterFed);
+                const matchLocDist = filterLocDist === 'Todos' || (c.distritoLocal && c.distritoLocal.trim() === filterLocDist);
+                
+                return matchMuni && matchLoc && matchFed && matchLocDist;
             });
 
-            // Evitar congelamiento de Chrome: Límite de renderizado de tarjetas HTML a 100
             const maxTarjetasRenderizadas = 100;
             const casillasParaMostrar = casillasFiltradas.slice(0, maxTarjetasRenderizadas);
 
