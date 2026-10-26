@@ -388,6 +388,9 @@
                             <button id="subTabSedes" onclick="switchAutoridadesSubTab('sedes')" class="px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 transition">
                                 <i class="fas fa-building mr-1"></i> Sedes y Juntas (<span id="countSedesBadge">0</span>)
                             </button>
+                            <button id="subTabCasillas" onclick="switchAutoridadesSubTab('casillas')" class="px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 transition border-l border-gray-300">
+                                <i class="fas fa-person-booth mr-1"></i> Casillas (<span id="countCasillasBadge">0</span>)
+                            </button>
                         </div>
 
                         <button onclick="exportarAutoridadesPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition duration-150 ease-in-out shadow text-sm flex items-center">
@@ -522,7 +525,25 @@
                     <div id="sedesGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
                 </div>
             </div>
-
+            <!-- SUB-VISTA C: MAPA Y DIRECTORIO DE CASILLAS -->
+                <div id="subViewCasillas" class="hidden space-y-6">
+                    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-5">
+                        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
+                            <div>
+                                <h3 class="text-lg font-bold text-gray-800"><i class="fas fa-map-marked-alt text-purple-600 mr-2"></i>Mapa Estatal de Casillas Electorales</h3>
+                                <p class="text-xs text-gray-500">Ubicación georreferenciada de las casillas en el estado.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <label class="text-xs font-bold text-gray-500 uppercase">Filtrar Mapa:</label>
+                                <select id="mapFilterCasillaMuni" onchange="renderCasillas()" class="border border-gray-300 rounded-md px-3 py-1.5 text-sm focus:ring-2 focus:ring-purple-500 bg-white">
+                                    <option value="Todos">Todos los municipios</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="casillasGeneralMapContainer" class="w-full h-[500px] rounded-md border border-gray-300 z-10 relative bg-gray-50"></div>
+                    </div>
+                    <div id="casillasGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+                </div>
             <!-- VISTA DE DETALLE DE UNA AUTORIDAD ELECTORAL -->
             <div id="autoridadDetailView" class="hidden">
                 <div class="flex justify-between items-center mb-4">
@@ -1183,29 +1204,50 @@
             }
         }
 
-        function switchAutoridadesSubTab(subTab) {
+       function switchAutoridadesSubTab(subTab) {
             appState.autoridadesSubTab = subTab;
             const subFunc = document.getElementById('subViewFuncionarios');
             const subSedes = document.getElementById('subViewSedes');
+            const subCasillas = document.getElementById('subViewCasillas');
             const btnFunc = document.getElementById('subTabFuncionarios');
             const btnSedes = document.getElementById('subTabSedes');
+            const btnCasillas = document.getElementById('subTabCasillas');
             const btnText = document.getElementById('btnNuevoRegistroText');
+
+            const activeClass = "px-3 py-1.5 text-xs font-bold bg-purple-700 text-white transition";
+            const inactiveClass = "px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 transition border-l border-gray-300";
 
             if (subTab === 'funcionarios') {
                 subFunc.classList.remove('hidden');
                 subSedes.classList.add('hidden');
-                btnFunc.className = "px-3 py-1.5 text-xs font-bold bg-purple-700 text-white transition";
-                btnSedes.className = "px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 transition";
+                if (subCasillas) subCasillas.classList.add('hidden');
+                btnFunc.className = activeClass;
+                btnSedes.className = inactiveClass;
+                if (btnCasillas) btnCasillas.className = inactiveClass;
                 if (btnText && appState.activeModule === 'autoridades') btnText.innerText = "Nueva Autoridad";
+                document.getElementById('btnNuevoRegistro').classList.remove('hidden');
                 renderAutoridades();
-            } else {
+            } else if (subTab === 'sedes') {
                 subFunc.classList.add('hidden');
                 subSedes.classList.remove('hidden');
-                btnSedes.className = "px-3 py-1.5 text-xs font-bold bg-purple-700 text-white transition";
-                btnFunc.className = "px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 transition";
+                if (subCasillas) subCasillas.classList.add('hidden');
+                btnSedes.className = activeClass;
+                btnFunc.className = inactiveClass;
+                if (btnCasillas) btnCasillas.className = inactiveClass;
                 if (btnText && appState.activeModule === 'autoridades') btnText.innerText = "Nueva Sede";
+                document.getElementById('btnNuevoRegistro').classList.remove('hidden');
                 renderSedes();
+            } else if (subTab === 'casillas') {
+                subFunc.classList.add('hidden');
+                subSedes.classList.add('hidden');
+                if (subCasillas) subCasillas.classList.remove('hidden');
+                if (btnCasillas) btnCasillas.className = activeClass;
+                btnFunc.className = inactiveClass;
+                btnSedes.className = inactiveClass;
+                document.getElementById('btnNuevoRegistro').classList.add('hidden');
+                renderCasillas();
             }
+            if (subTab !== 'casillas') applyPermissions();
         }
 
         const CLAVE_SESION_TAB = 'directorio_tlaxcala_sesion_tab_v1';
@@ -1920,6 +1962,7 @@
 
         
         // Procesador para limpiar las columnas desfasadas del INE
+        // Procesador para limpiar las columnas desfasadas del INE
         function getDatosElectorales(c) {
             let seccionCol = String(c.noSeccion || '').trim();
             let municipioCol = String(c.municipio || '').trim();
@@ -1936,14 +1979,18 @@
             }
             
             let municipioReal = municipioCol;
-            let localidadReal = '';
+            // FIX: Leer directamente el campo 'localidad' del objeto, ya no 'ubicacion'
+            let localidadReal = String(c.localidad || '').trim(); 
             let tipoCasillaReal = tipoCasCol;
             
             // 2. Detectar columnas desfasadas (ej. Si tipoSeccion tiene "31) TETLA...")
             if (tipoSecCol && tipoSecCol !== 'Urbana' && tipoSecCol !== 'No Urbana' && tipoSecCol !== 'Rural') {
-                // Limpiamos los prefijos numéricos como "31) "
                 municipioReal = tipoSecCol.replace(/^\d+\)\s*/, '');
-                localidadReal = tipoCasCol.replace(/^\d+\)\s*/, '');
+                
+                // Fallback para bases de datos heredadas
+                if (!localidadReal) {
+                    localidadReal = tipoCasCol.replace(/^\d+\)\s*/, ''); 
+                }
                 
                 // Deducir el tipo de casilla desde el sufijo del ID
                 let sufijo = String(c.idCasilla).split('_').pop() || '';
@@ -1952,11 +1999,6 @@
                 else if (sufijo.startsWith('E') && !sufijo.startsWith('EX')) tipoCasillaReal = 'Especial ' + sufijo.substring(1);
                 else if (sufijo.startsWith('EX')) tipoCasillaReal = 'Extraordinaria ' + sufijo.substring(2);
                 else tipoCasillaReal = sufijo;
-            } else {
-                // Si son datos capturados limpios desde tu formulario
-                municipioReal = municipioCol;
-                localidadReal = String(c.ubicacion || '').trim(); 
-                tipoCasillaReal = tipoCasCol;
             }
             
             return { seccionReal, municipioReal, localidadReal, tipoCasillaReal };
@@ -2699,6 +2741,21 @@
 
             const countSedesEl = document.getElementById('countSedesBadge');
             if (countSedesEl) countSedesEl.innerText = appState.sedes.length;
+
+            const countCasillasEl = document.getElementById('countCasillasBadge');
+            if (countCasillasEl) countCasillasEl.innerText = appState.casillas.length;
+            
+            const mapFilterCas = document.getElementById('mapFilterCasillaMuni');
+            if (mapFilterCas && mapFilterCas.options.length <= 1) {
+                const muniSet = new Set();
+                appState.casillas.forEach(c => {
+                    const datos = getDatosElectorales(c);
+                    if (datos.municipioReal) muniSet.add(datos.municipioReal);
+                });
+                let html = '<option value="Todos">Todos los municipios</option>';
+                Array.from(muniSet).sort().forEach(m => html += `<option value="${m}">${m}</option>`);
+                mapFilterCas.innerHTML = html;
+            }
         }
 
         function limpiarFiltrosAutoridades() {
@@ -4272,6 +4329,113 @@
             });
             selectCasilla.innerHTML = html;
             renderAutoridades();
+        }
+
+        function renderCasillas() {
+            const grid = document.getElementById('casillasGrid');
+            const mapDiv = document.getElementById('casillasGeneralMapContainer');
+            if (!grid || !mapDiv) return;
+
+            if (appState.casillasMapInstance) {
+                appState.casillasMapInstance.remove();
+                appState.casillasMapInstance = null;
+            }
+
+            const filterMuni = document.getElementById('mapFilterCasillaMuni')?.value || 'Todos';
+            let validPoints = [];
+            let html = '';
+
+            const casillasFiltradas = appState.casillas.filter(c => {
+                const datos = getDatosElectorales(c);
+                return filterMuni === 'Todos' || datos.municipioReal === filterMuni;
+            });
+
+            casillasFiltradas.sort((a, b) => String(a.idCasilla).localeCompare(String(b.idCasilla))).forEach(c => {
+                const datos = getDatosElectorales(c);
+                let numAdscritos = appState.autoridades.filter(a => a.idCasilla === c.idCasilla).length;
+
+                const coordsMatch = (c.coordenadasGps || '').match(/([-+]?\d{1,2}\.\d+),\s*([-+]?\d{1,3}\.\d+)/);
+                if (coordsMatch) {
+                    const lat = parseFloat(coordsMatch[1]);
+                    const lng = parseFloat(coordsMatch[2]);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        // Offset microscópico para que si dos casillas están en la misma escuela (mismas coordenadas) se vean ambas chinchetas
+                        const offsetLat = lat + (Math.random() - 0.5) * 0.0003;
+                        const offsetLng = lng + (Math.random() - 0.5) * 0.0003;
+                        validPoints.push({ lat: offsetLat, lng: offsetLng, casilla: c, datos, numAdscritos });
+                    }
+                }
+
+                html += `
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex justify-between items-start mb-2">
+                            <span class="px-2.5 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">Sección ${datos.seccionReal}</span>
+                            <span class="text-xs font-bold text-gray-500">${c.idCasilla}</span>
+                        </div>
+                        <h4 class="text-lg font-bold text-gray-900">${datos.tipoCasillaReal}</h4>
+                        <p class="text-xs font-semibold text-purple-700 mb-3"><i class="fas fa-map-marker-alt mr-1"></i>${datos.municipioReal} - ${datos.localidadReal}</p>
+                        
+                        <div class="text-xs text-gray-600 space-y-1.5 border-t border-gray-100 pt-3">
+                            <p><i class="fas fa-building w-4 text-gray-400 mr-1"></i> <b>Ubicación:</b> ${c.ubicacion || 'N/A'}</p>
+                            <p><i class="fas fa-map-pin w-4 text-gray-400 mr-1"></i> <b>Domicilio:</b> ${c.domicilio || 'N/A'}</p>
+                        </div>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center text-xs">
+                        <span class="font-semibold text-gray-700"><i class="fas fa-users mr-1 text-purple-600"></i> ${numAdscritos} adscritos</span>
+                        <button onclick="filtrarPorCasillaMesa('${c.idCasilla}')" class="text-purple-700 hover:underline font-semibold">Ver personal &rarr;</button>
+                    </div>
+                </div>`;
+            });
+
+            grid.innerHTML = html || `<div class="col-span-full text-center py-8 text-gray-500">No hay casillas en este municipio.</div>`;
+
+            if (validPoints.length > 0) {
+                appState.casillasMapInstance = L.map('casillasGeneralMapContainer').setView([validPoints[0].lat, validPoints[0].lng], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(appState.casillasMapInstance);
+
+                validPoints.forEach(p => {
+                    // Colores por tipo de casilla
+                    const color = p.datos.tipoCasillaReal.includes('Básica') ? 'blue' : (p.datos.tipoCasillaReal.includes('Contigua') ? 'green' : 'red');
+                    const markerStyles = `background-color: ${color}; width: 1.5rem; height: 1.5rem; display: block; left: -0.75rem; top: -0.75rem; position: relative; border-radius: 3rem 3rem 0; transform: rotate(45deg); border: 1px solid #FFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`;
+                    
+                    const customIcon = L.divIcon({ className: "custom-pin", iconAnchor: [0, 24], popupAnchor: [0, -30], html: `<span style="${markerStyles}"></span>` });
+
+                    L.marker([p.lat, p.lng], {icon: customIcon})
+                      .addTo(appState.casillasMapInstance)
+                      .bindPopup(`<div class="text-sm"><b class="text-purple-700">Sección ${p.datos.seccionReal} - ${p.datos.tipoCasillaReal}</b><br><span class="text-xs text-gray-600">${p.casilla.ubicacion || ''}</span><hr class="my-1"><b>Municipio:</b> ${p.datos.municipioReal}</div>`);
+                });
+
+                if (validPoints.length > 1) {
+                    const bounds = L.latLngBounds(validPoints.map(p => [p.lat, p.lng]));
+                    appState.casillasMapInstance.fitBounds(bounds, { padding: [40, 40] });
+                }
+                setTimeout(() => { if (appState.casillasMapInstance) appState.casillasMapInstance.invalidateSize(); }, 200);
+            } else {
+                mapDiv.innerHTML = `<div class="h-full flex items-center justify-center text-gray-400 italic">No hay coordenadas GPS registradas en las casillas mostradas.</div>`;
+            }
+        }
+        
+        // Función para el botón "Ver personal ->" desde las tarjetas de casillas
+        function filtrarPorCasillaMesa(idCasilla) {
+            switchAutoridadesSubTab('funcionarios');
+            document.getElementById('filterAutOrgano').value = 'Mesa Directiva de Casilla';
+            handleDashboardOrganoChange(); 
+            setTimeout(() => {
+                const casillaObj = appState.casillas.find(c => c.idCasilla === idCasilla);
+                if(casillaObj) {
+                    const datosCas = getDatosElectorales(casillaObj);
+                    const selMuni = document.getElementById('dashFilterMunicipio');
+                    if(selMuni) { selMuni.value = datosCas.municipioReal; dashFiltrarLocalidades(); }
+                    const selLoc = document.getElementById('dashFilterLocalidad');
+                    if(selLoc) { selLoc.value = datosCas.localidadReal; dashFiltrarSecciones(); }
+                    const selSec = document.getElementById('dashFilterSeccion');
+                    if(selSec) { selSec.value = datosCas.seccionReal; dashFiltrarCasillas(); }
+                    const selCas = document.getElementById('dashFilterCasilla');
+                    if(selCas) selCas.value = datosCas.tipoCasillaReal;
+                    renderAutoridades();
+                }
+            }, 150);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
