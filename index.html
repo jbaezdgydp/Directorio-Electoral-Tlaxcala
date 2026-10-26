@@ -4350,21 +4350,13 @@
                 return filterMuni === 'Todos' || datos.municipioReal === filterMuni;
             });
 
-            casillasFiltradas.sort((a, b) => String(a.idCasilla).localeCompare(String(b.idCasilla))).forEach(c => {
+            // Evitar congelamiento de Chrome: Límite de renderizado de tarjetas HTML a 100
+            const maxTarjetasRenderizadas = 100;
+            const casillasParaMostrar = casillasFiltradas.slice(0, maxTarjetasRenderizadas);
+
+            casillasParaMostrar.sort((a, b) => String(a.idCasilla).localeCompare(String(b.idCasilla))).forEach(c => {
                 const datos = getDatosElectorales(c);
                 let numAdscritos = appState.autoridades.filter(a => a.idCasilla === c.idCasilla).length;
-
-                const coordsMatch = (c.coordenadasGps || '').match(/([-+]?\d{1,2}\.\d+),\s*([-+]?\d{1,3}\.\d+)/);
-                if (coordsMatch) {
-                    const lat = parseFloat(coordsMatch[1]);
-                    const lng = parseFloat(coordsMatch[2]);
-                    if (!isNaN(lat) && !isNaN(lng)) {
-                        // Offset microscópico para que si dos casillas están en la misma escuela (mismas coordenadas) se vean ambas chinchetas
-                        const offsetLat = lat + (Math.random() - 0.5) * 0.0003;
-                        const offsetLng = lng + (Math.random() - 0.5) * 0.0003;
-                        validPoints.push({ lat: offsetLat, lng: offsetLng, casilla: c, datos, numAdscritos });
-                    }
-                }
 
                 html += `
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-5 flex flex-col justify-between">
@@ -4388,6 +4380,27 @@
                 </div>`;
             });
 
+            // Procesar pines del mapa (límite de 300 para no bloquear la página)
+            const maxPinesMapa = 300;
+            const casillasParaMapa = casillasFiltradas.slice(0, maxPinesMapa);
+
+            casillasParaMapa.forEach(c => {
+                 const coordsMatch = (c.coordenadasGps || '').match(/([-+]?\d{1,2}\.\d+),\s*([-+]?\d{1,3}\.\d+)/);
+                if (coordsMatch) {
+                    const lat = parseFloat(coordsMatch[1]);
+                    const lng = parseFloat(coordsMatch[2]);
+                    if (!isNaN(lat) && !isNaN(lng)) {
+                        const offsetLat = lat + (Math.random() - 0.5) * 0.0003;
+                        const offsetLng = lng + (Math.random() - 0.5) * 0.0003;
+                        validPoints.push({ lat: offsetLat, lng: offsetLng, casilla: c, datos: getDatosElectorales(c) });
+                    }
+                }
+            });
+
+            if (casillasFiltradas.length > maxTarjetasRenderizadas) {
+                html += `<div class="col-span-full text-center py-4 text-gray-500 font-semibold bg-gray-100 rounded-md">Mostrando las primeras ${maxTarjetasRenderizadas} casillas. Usa el filtro de municipio para ver más.</div>`;
+            }
+
             grid.innerHTML = html || `<div class="col-span-full text-center py-8 text-gray-500">No hay casillas en este municipio.</div>`;
 
             if (validPoints.length > 0) {
@@ -4395,10 +4408,8 @@
                 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(appState.casillasMapInstance);
 
                 validPoints.forEach(p => {
-                    // Colores por tipo de casilla
                     const color = p.datos.tipoCasillaReal.includes('Básica') ? 'blue' : (p.datos.tipoCasillaReal.includes('Contigua') ? 'green' : 'red');
                     const markerStyles = `background-color: ${color}; width: 1.5rem; height: 1.5rem; display: block; left: -0.75rem; top: -0.75rem; position: relative; border-radius: 3rem 3rem 0; transform: rotate(45deg); border: 1px solid #FFF; box-shadow: 0 1px 3px rgba(0,0,0,0.3);`;
-                    
                     const customIcon = L.divIcon({ className: "custom-pin", iconAnchor: [0, 24], popupAnchor: [0, -30], html: `<span style="${markerStyles}"></span>` });
 
                     L.marker([p.lat, p.lng], {icon: customIcon})
@@ -4410,9 +4421,18 @@
                     const bounds = L.latLngBounds(validPoints.map(p => [p.lat, p.lng]));
                     appState.casillasMapInstance.fitBounds(bounds, { padding: [40, 40] });
                 }
+                
+                if (casillasFiltradas.length > maxPinesMapa) {
+                     // Añadimos una advertencia visual sobre el mapa
+                     const mapWarning = document.createElement('div');
+                     mapWarning.className = "absolute top-2 left-1/2 transform -translate-x-1/2 bg-yellow-100 border border-yellow-400 text-yellow-800 text-xs px-3 py-1 rounded shadow z-[1000]";
+                     mapWarning.innerText = `Mostrando ${maxPinesMapa} marcadores en el mapa para evitar saturación. Usa el filtro de municipio.`;
+                     document.getElementById('casillasGeneralMapContainer').appendChild(mapWarning);
+                }
+
                 setTimeout(() => { if (appState.casillasMapInstance) appState.casillasMapInstance.invalidateSize(); }, 200);
             } else {
-                mapDiv.innerHTML = `<div class="h-full flex items-center justify-center text-gray-400 italic">No hay coordenadas GPS registradas en las casillas mostradas.</div>`;
+                mapDiv.innerHTML = `<div class="h-full flex items-center justify-center text-gray-400 italic">No hay coordenadas GPS registradas en las casillas mostradas. Usa el botón 'Actualizar datos'.</div>`;
             }
         }
         
