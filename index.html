@@ -833,6 +833,22 @@
                                 <option value="Extraordinaria 1">Extraordinaria 1</option>
                             </select>
                         </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Distrito Federal</label>
+                            <input type="text" id="formAutCasillaDistritoFederal" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm" placeholder="Ej. 1) APIZACO">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Distrito Local</label>
+                            <input type="text" id="formAutCasillaDistritoLocal" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm" placeholder="Ej. 4) APIZACO">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Ubicación</label>
+                            <input type="text" id="formAutCasillaUbicacion" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm" placeholder="Ej. Escuela primaria">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Referencia</label>
+                            <input type="text" id="formAutCasillaReferencia" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm" placeholder="Ej. Frente al parque">
+                        </div>
                         <div class="md:col-span-3">
                             <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Domicilio / Ubicación Exacta</label>
                             <input type="text" id="formAutCasillaDomicilio" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Calle, número, escuela o referencia...">
@@ -3215,6 +3231,11 @@
                 const selectIdCas = document.getElementById('formAutIdCasillaSelect');
                 if (aut.idCasilla && Array.from(selectIdCas.options).some(o => o.value === aut.idCasilla)) {
                     selectIdCas.value = aut.idCasilla;
+                } else if (aut.idCasilla) {
+                    // Conservar la relación existente aunque no aparezca entre las opciones filtradas.
+                    const opcion = new Option('Casilla vinculada: ' + aut.idCasilla, aut.idCasilla);
+                    selectIdCas.add(opcion);
+                    selectIdCas.value = aut.idCasilla;
                 } else {
                     selectIdCas.value = '__NUEVA__';
                 }
@@ -3305,12 +3326,15 @@
                     }
 
                     datosNuevaCasilla = {
+                        distritoFederal: document.getElementById('formAutCasillaDistritoFederal')?.value.trim() || '',
+                        distritoLocal: document.getElementById('formAutCasillaDistritoLocal')?.value.trim() || '',
                         municipio: muniCasilla,
+                        localidad: localidadCasilla,
                         noSeccion: seccionCasilla,
-                        tipoSeccion: tipoSeccionCasilla,
                         tipoCasilla: tipoCasilla,
-                        ubicacion: localidadCasilla, 
-                        domicilio: domicilioCasilla
+                        domicilio: domicilioCasilla,
+                        ubicacion: document.getElementById('formAutCasillaUbicacion')?.value.trim() || '',
+                        referencia: document.getElementById('formAutCasillaReferencia')?.value.trim() || ''
                     };
                     ambitoFinal = `Casilla - Secc. ${seccionCasilla} (${tipoCasilla}) - ${muniCasilla}`;
                 }
