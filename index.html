@@ -3258,9 +3258,9 @@
                     } else {
                         ambitoFinal = `Casilla (${idCasillaSeleccionada})`;
                     }
-               } else {
+                } else {
                     const muniCasilla = document.getElementById('formAutCasillaMunicipio').value;
-                    const localidadCasilla = document.getElementById('formAutCasillaLocalidad').value.trim(); // NUEVO CAMPO
+                    const localidadCasilla = document.getElementById('formAutCasillaLocalidad')?.value.trim() || ''; 
                     const seccionCasilla = document.getElementById('formAutCasillaSeccion').value.trim();
                     const tipoSeccionCasilla = document.getElementById('formAutCasillaTipoSeccion').value;
                     const tipoCasilla = document.getElementById('formAutCasillaTipo').value;
@@ -3276,12 +3276,14 @@
                         noSeccion: seccionCasilla,
                         tipoSeccion: tipoSeccionCasilla,
                         tipoCasilla: tipoCasilla,
-                        ubicacion: localidadCasilla, // Guardamos la Localidad en la columna de Ubicación de la BD
+                        ubicacion: localidadCasilla, 
                         domicilio: domicilioCasilla
                     };
                     ambitoFinal = `Casilla - Secc. ${seccionCasilla} (${tipoCasilla}) - ${muniCasilla}`;
                 }
             }
+
+            const fotoExistente = id ? (appState.autoridades.find(a => a.id === id)?.foto || '') : '';
 
             const payload = {
                 id: id || null,
@@ -3303,7 +3305,7 @@
                 redesSociales: document.getElementById('formAutRedes').value.trim(),
                 sintesisCurricular: document.getElementById('formAutSintesis').value.trim(),
                 fotoBase64: currentAutBase64Image,
-                fotoUrlActual: id ? (appState.autoridades.find(a => a.id === id)?.foto || '') : ''
+                fotoUrlActual: fotoExistente
             };
 
             if (!payload.nombreCompleto || !payload.puestoCargo || !payload.organoColegiado) {
@@ -3340,10 +3342,12 @@
                     if (appState.selectedAutoridadId) renderAutoridadDetail();
                     else renderAutoridades();
                 } else {
-                    alert("Error al guardar: " + (res ? res.mensaje : "Error desconocido"));
+                    alert("Error al guardar: " + (res ? res.mensaje : "Error desconocido devuelto por el servidor"));
                 }
             } catch (e) {
-                alert("Error de conexión al guardar la autoridad.");
+                console.error("Error capturado al guardar autoridad:", e);
+                // ESTA LÍNEA ES CLAVE: Mostrará el error real en lugar del genérico
+                alert("Error al procesar la solicitud: " + (e.message || "Fallo de conexión"));
             } finally {
                 hideLoading();
             }
@@ -3641,8 +3645,9 @@
                     alert("Error al guardar: " + (res ? res.mensaje : "Error desconocido"));
                 }
             } catch(e) { 
-                alert("Error de conexión al guardar los datos."); 
-            } finally { 
+                console.error("Error interno:", e);
+                alert("Error al procesar: " + (e.message || "Fallo de conexión")); 
+            } finally {
                 hideLoading(); 
             }
         }
@@ -3723,8 +3728,9 @@
                     alert("Error: " + (res ? res.mensaje : "Error desconocido")); 
                 }
             } catch(e) { 
-                alert("Error de conexión al procesar actividad."); 
-            } finally { 
+                console.error("Error interno:", e);
+                alert("Error al procesar: " + (e.message || "Fallo de conexión")); 
+            } finally {
                 hideLoading(); 
             }
         }
@@ -3796,8 +3802,9 @@
                 } else {
                     alert("Error: " + (res ? res.mensaje : "Error desconocido"));
                 }
-            } catch(e) {
-                alert("Error de conexión al procesar publicación.");
+            } catch(e) { 
+                console.error("Error interno:", e);
+                alert("Error al procesar: " + (e.message || "Fallo de conexión")); 
             } finally {
                 hideLoading();
             }
@@ -4012,9 +4019,10 @@
                     } else {
                         alert("Hubo un problema al eliminar el registro.");
                     }
-                } catch(e) {
-                    alert("Error de conexión con el servidor.");
-                } finally {
+                } catch(e) { 
+                console.error("Error interno:", e);
+                alert("Error al procesar: " + (e.message || "Fallo de conexión")); 
+            } finally {
                     hideLoading();
                 }
             }
