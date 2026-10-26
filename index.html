@@ -805,6 +805,10 @@
                             </select>
                         </div>
                         <div>
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Localidad *</label>
+                            <input type="text" id="formAutCasillaLocalidad" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Ej. Santa Anita">
+                        </div>
+                        <div>
                             <label class="block text-xs font-bold text-purple-700 uppercase mb-1">No. Sección *</label>
                             <input type="number" id="formAutCasillaSeccion" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Ej. 124">
                         </div>
@@ -829,13 +833,9 @@
                                 <option value="Extraordinaria 1">Extraordinaria 1</option>
                             </select>
                         </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Ubicación (Escuela / Lugar)</label>
-                            <input type="text" id="formAutCasillaUbicacion" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Ej. Escuela Primaria Vicente Guerrero">
-                        </div>
-                        <div class="md:col-span-2">
-                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Domicilio / Referencia</label>
-                            <input type="text" id="formAutCasillaDomicilio" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Calle, número, localidad, C.P.">
+                        <div class="md:col-span-3">
+                            <label class="block text-xs font-bold text-purple-700 uppercase mb-1">Domicilio / Ubicación Exacta</label>
+                            <input type="text" id="formAutCasillaDomicilio" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white" placeholder="Calle, número, escuela o referencia...">
                         </div>
                     </div>
                 </div>
@@ -1863,6 +1863,13 @@
 
         // --- PASO 1: Inicializar Municipios ---
         function inicializarSelectoresCasillaModal() {
+            // Rellenar el selector de "Nueva Casilla" con todos los municipios oficiales
+            const selectMuniNueva = document.getElementById('formAutCasillaMunicipio');
+            if (selectMuniNueva && selectMuniNueva.options.length <= 1) {
+                MUNICIPIOS.forEach(m => selectMuniNueva.innerHTML += `<option value="${m}">${m}</option>`);
+            }
+
+            // Rellenar el filtro en cascada con los municipios que ya tienen casillas en la base de datos
             const selectFiltroMunicipio = document.getElementById('formAutFiltroMunicipioCasilla');
             if (selectFiltroMunicipio) {
                 const municipiosSet = new Set();
@@ -1957,7 +1964,9 @@
             if (secFiltro !== 'Todas' && document.getElementById('formAutCasillaSeccion')) {
                 document.getElementById('formAutCasillaSeccion').value = secFiltro;
             }
-
+            if (locFiltro !== 'Todas' && document.getElementById('formAutCasillaLocalidad')) {
+                document.getElementById('formAutCasillaLocalidad').value = locFiltro;
+            }
             handleSeleccionIdCasillaChange();
         }
 
@@ -3079,10 +3088,11 @@
 
             if (document.getElementById('formAutCasillaMunicipio')) {
                 document.getElementById('formAutCasillaMunicipio').value = "";
+                document.getElementById('formAutCasillaLocalidad').value = ""; // <--- AÑADIR ESTA LÍNEA
                 document.getElementById('formAutCasillaSeccion').value = "";
                 document.getElementById('formAutCasillaTipoSeccion').value = "Urbana";
                 document.getElementById('formAutCasillaTipo').value = "Básica";
-                document.getElementById('formAutCasillaUbicacion').value = "";
+                document.getElementById('formAutCasillaUbicacion').value = ""; 
                 document.getElementById('formAutCasillaDomicilio').value = "";
             }
 
@@ -3249,12 +3259,12 @@
                     } else {
                         ambitoFinal = `Casilla (${idCasillaSeleccionada})`;
                     }
-                } else {
+               } else {
                     const muniCasilla = document.getElementById('formAutCasillaMunicipio').value;
+                    const localidadCasilla = document.getElementById('formAutCasillaLocalidad').value.trim(); // NUEVO CAMPO
                     const seccionCasilla = document.getElementById('formAutCasillaSeccion').value.trim();
                     const tipoSeccionCasilla = document.getElementById('formAutCasillaTipoSeccion').value;
                     const tipoCasilla = document.getElementById('formAutCasillaTipo').value;
-                    const ubicacionCasilla = document.getElementById('formAutCasillaUbicacion').value.trim();
                     const domicilioCasilla = document.getElementById('formAutCasillaDomicilio').value.trim();
 
                     if (!muniCasilla || !seccionCasilla) {
@@ -3267,7 +3277,7 @@
                         noSeccion: seccionCasilla,
                         tipoSeccion: tipoSeccionCasilla,
                         tipoCasilla: tipoCasilla,
-                        ubicacion: ubicacionCasilla,
+                        ubicacion: localidadCasilla, // Guardamos la Localidad en la columna de Ubicación de la BD
                         domicilio: domicilioCasilla
                     };
                     ambitoFinal = `Casilla - Secc. ${seccionCasilla} (${tipoCasilla}) - ${muniCasilla}`;
