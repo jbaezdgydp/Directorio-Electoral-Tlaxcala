@@ -1863,13 +1863,13 @@
 
         // --- PASO 1: Inicializar Municipios ---
         function inicializarSelectoresCasillaModal() {
-            // Rellenar el selector de "Nueva Casilla" con todos los municipios oficiales
             const selectMuniNueva = document.getElementById('formAutCasillaMunicipio');
             if (selectMuniNueva && selectMuniNueva.options.length <= 1) {
-                MUNICIPIOS.forEach(m => selectMuniNueva.innerHTML += `<option value="${m}">${m}</option>`);
+                let htmlNueva = '<option value="">Selecciona...</option>';
+                MUNICIPIOS.forEach(m => htmlNueva += `<option value="${m}">${m}</option>`);
+                selectMuniNueva.innerHTML = htmlNueva;
             }
 
-            // Rellenar el filtro en cascada con los municipios que ya tienen casillas en la base de datos
             const selectFiltroMunicipio = document.getElementById('formAutFiltroMunicipioCasilla');
             if (selectFiltroMunicipio) {
                 const municipiosSet = new Set();
@@ -1879,8 +1879,9 @@
                 });
                 
                 const municipiosOrdenados = Array.from(municipiosSet).sort();
-                selectFiltroMunicipio.innerHTML = '<option value="Todos">Todos los municipios</option>';
-                municipiosOrdenados.forEach(m => selectFiltroMunicipio.innerHTML += `<option value="${m}">${m}</option>`);
+                let htmlFiltro = '<option value="Todos">Todos los municipios</option>';
+                municipiosOrdenados.forEach(m => htmlFiltro += `<option value="${m}">${m}</option>`);
+                selectFiltroMunicipio.innerHTML = htmlFiltro;
             }
             filtrarLocalidadesPorMunicipio();
         }
@@ -1900,8 +1901,9 @@
             });
 
             const localidadesOrdenadas = Array.from(localidadesSet).sort();
-            selectLocalidad.innerHTML = '<option value="Todas">Todas las localidades</option>';
-            localidadesOrdenadas.forEach(loc => selectLocalidad.innerHTML += `<option value="${loc}">${loc}</option>`);
+            let html = '<option value="Todas">Todas las localidades</option>';
+            localidadesOrdenadas.forEach(loc => html += `<option value="${loc}">${loc}</option>`);
+            selectLocalidad.innerHTML = html;
 
             filtrarSeccionesPorLocalidad();
         }
@@ -1925,8 +1927,9 @@
             });
 
             const seccionesOrdenadas = Array.from(seccionesSet).sort((a, b) => parseInt(a, 10) - parseInt(b, 10));
-            selectSeccion.innerHTML = '<option value="Todas">Todas las secciones</option>';
-            seccionesOrdenadas.forEach(sec => selectSeccion.innerHTML += `<option value="${sec}">Sección ${sec}</option>`);
+            let html = '<option value="Todas">Todas las secciones</option>';
+            seccionesOrdenadas.forEach(sec => html += `<option value="${sec}">Sección ${sec}</option>`);
+            selectSeccion.innerHTML = html;
 
             filtrarSelectorCasillasPorSeccion();
         }
@@ -1947,17 +1950,16 @@
                 return matchMuni && matchLoc && matchSec;
             });
 
-            selectIdCasilla.innerHTML = '';
-            
+            let html = '';
             // Ordenar las casillas (Básica primero, luego Contiguas, luego Especiales)
             casillasFiltradas.sort((a, b) => String(a.idCasilla).localeCompare(String(b.idCasilla))).forEach(c => {
                 const datos = getDatosElectorales(c);
-                // Mostrar ÚNICAMENTE el tipo de casilla limpia
-                selectIdCasilla.innerHTML += `<option value="${c.idCasilla}">${datos.tipoCasillaReal}</option>`;
+                html += `<option value="${c.idCasilla}">${datos.tipoCasillaReal}</option>`;
             });
-            selectIdCasilla.innerHTML += `<option value="__NUEVA__">+ Registrar nueva casilla...</option>`;
+            html += `<option value="__NUEVA__">+ Registrar nueva casilla...</option>`;
+            selectIdCasilla.innerHTML = html;
 
-            // Llenar autómaticamente el sub-formulario para casillas nuevas (si se decide agregar manual)
+            // Llenar autómaticamente el sub-formulario para casillas nuevas
             if (muniFiltro !== 'Todos' && document.getElementById('formAutCasillaMunicipio')) {
                 document.getElementById('formAutCasillaMunicipio').value = muniFiltro;
             }
@@ -1967,6 +1969,7 @@
             if (locFiltro !== 'Todas' && document.getElementById('formAutCasillaLocalidad')) {
                 document.getElementById('formAutCasillaLocalidad').value = locFiltro;
             }
+            
             handleSeleccionIdCasillaChange();
         }
 
@@ -3346,7 +3349,6 @@
                 }
             } catch (e) {
                 console.error("Error capturado al guardar autoridad:", e);
-                // ESTA LÍNEA ES CLAVE: Mostrará el error real en lugar del genérico
                 alert("Error al procesar la solicitud: " + (e.message || "Fallo de conexión"));
             } finally {
                 hideLoading();
