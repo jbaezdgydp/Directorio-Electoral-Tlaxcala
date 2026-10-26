@@ -417,7 +417,7 @@
                             </div>
                             <div>
                                 <label class="block text-xs font-bold text-gray-500 uppercase mb-1">Órgano Colegiado</label>
-                                <select id="filterAutOrgano" onchange="renderAutoridades()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                <select id="filterAutOrgano" onchange="handleDashboardOrganoChange()" class="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-500">
                                     <option value="Todos">Todos los órganos</option>
                                 </select>
                             </div>
@@ -433,6 +433,35 @@
                                     <option value="Todos">Todos los cargos</option>
                                 </select>
                             </div>
+                            <!-- NUEVO: FILTROS EN CASCADA PARA EL DASHBOARD -->
+                                <div id="dashboardCasillaFilters" class="hidden md:col-span-6 grid-cols-1 md:grid-cols-4 gap-4 mt-2 p-3 bg-purple-50 rounded-md border border-purple-100">
+                                    <div>
+                                <label class="block text-xs font-bold text-purple-800 uppercase mb-1">1. Municipio</label>
+                                <select id="dashFilterMunicipio" onchange="dashFiltrarLocalidades()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="Todos">Todos</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-purple-800 uppercase mb-1">2. Localidad</label>
+                                <select id="dashFilterLocalidad" onchange="dashFiltrarSecciones()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="Todas">Todas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-purple-800 uppercase mb-1">3. Sección</label>
+                                <select id="dashFilterSeccion" onchange="dashFiltrarCasillas()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="Todas">Todas</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-purple-800 uppercase mb-1">4. Casilla</label>
+                                <select id="dashFilterCasilla" onchange="renderAutoridades()" class="w-full border border-gray-300 rounded-md px-2.5 py-1.5 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-purple-500">
+                                    <option value="Todas">Todas</option>
+                                </select>
+                            </div>
+                        </div>
+
+
                         </div>
 
                         
@@ -2681,6 +2710,15 @@
             document.getElementById('filterAutParticipacion').value = 'Todas';
             document.getElementById('filterAutCondicion').value = 'Todas';
             document.getElementById('filterAutEstatus').value = 'Todos';
+            const container = document.getElementById('dashboardCasillaFilters');
+            if (container) {
+                container.classList.add('hidden');
+                container.classList.remove('grid');
+                document.getElementById('dashFilterMunicipio').value = 'Todos';
+                document.getElementById('dashFilterLocalidad').value = 'Todas';
+                document.getElementById('dashFilterSeccion').value = 'Todas';
+                document.getElementById('dashFilterCasilla').value = 'Todas';
+            }
             renderAutoridades();
         }
 
@@ -2701,6 +2739,11 @@
             const part = document.getElementById('filterAutParticipacion')?.value || 'Todas';
             const cond = document.getElementById('filterAutCondicion')?.value || 'Todas';
             const est = document.getElementById('filterAutEstatus')?.value || 'Todos';
+            const isCasillaFilterActive = org === 'Mesa Directiva de Casilla';
+            const dashMuni = document.getElementById('dashFilterMunicipio')?.value || 'Todos';
+            const dashLoc = document.getElementById('dashFilterLocalidad')?.value || 'Todas';
+            const dashSec = document.getElementById('dashFilterSeccion')?.value || 'Todas';
+            const dashCasilla = document.getElementById('dashFilterCasilla')?.value || 'Todas';
 
             let filtradas = appState.autoridades.filter(a => {
                 const targetText = `${a.nombreCompleto || ''} ${a.puestoCargo || ''} ${a.organoColegiado || ''} ${a.ambitoDistrito || ''} ${a.correoElectronico || ''} ${a.partidoOrganizacion || ''}`.toLowerCase();
@@ -2719,7 +2762,29 @@
                 const matchCond = cond === 'Todas' || a.condicion === cond;
                 const matchEst = est === 'Todos' || (a.estatus || 'Activo') === est;
 
-                return matchText && matchInst && matchOrg && matchSede && matchCargo && matchPart && matchCond && matchEst;
+              let matchCasillaCascade = true;
+                if (isCasillaFilterActive) {
+                    if (dashCasilla !== 'Todas') {
+                        matchCasillaCascade = a.idCasilla === dashCasilla;
+                    } else if (dashMuni !== 'Todos' || dashLoc !== 'Todas' || dashSec !== 'Todas') {
+                        if (!a.idCasilla) {
+                            matchCasillaCascade = false;
+                        } else {
+                            const casillaObj = appState.casillas.find(c => c.idCasilla === a.idCasilla);
+                            if (!casillaObj) {
+                                matchCasillaCascade = false;
+                            } else {
+                                const datosCas = getDatosElectorales(casillaObj);
+                                matchCasillaCascade = 
+                                    (dashMuni === 'Todos' || datosCas.municipioReal === dashMuni) &&
+                                    (dashLoc === 'Todas' || datosCas.localidadReal === dashLoc) &&
+                                    (dashSec === 'Todas' || datosCas.seccionReal === dashSec);
+                            }
+                        }
+                    }
+                }
+
+                return matchText && matchInst && matchOrg && matchSede && matchCargo && matchPart && matchCond && matchEst && matchCasillaCascade;
             });
 
             filtradas = ordenarAutoridades(filtradas);
@@ -4115,6 +4180,98 @@
                     hideLoading();
                 }
             }
+        }
+        function handleDashboardOrganoChange() {
+            const organo = document.getElementById('filterAutOrgano').value;
+            const container = document.getElementById('dashboardCasillaFilters');
+            if (organo === 'Mesa Directiva de Casilla') {
+                container.classList.remove('hidden');
+                container.classList.add('grid');
+                dashInicializarMunicipios();
+            } else {
+                container.classList.add('hidden');
+                container.classList.remove('grid');
+                document.getElementById('dashFilterMunicipio').value = 'Todos';
+                document.getElementById('dashFilterLocalidad').value = 'Todas';
+                document.getElementById('dashFilterSeccion').value = 'Todas';
+                document.getElementById('dashFilterCasilla').value = 'Todas';
+            }
+            renderAutoridades();
+        }
+
+        function dashInicializarMunicipios() {
+            const selectMuni = document.getElementById('dashFilterMunicipio');
+            if (selectMuni.options.length <= 1) {
+                const municipiosSet = new Set();
+                (appState.casillas || []).forEach(c => {
+                    const datos = getDatosElectorales(c);
+                    if (datos.municipioReal) municipiosSet.add(datos.municipioReal);
+                });
+                let html = '<option value="Todos">Todos los municipios</option>';
+                Array.from(municipiosSet).sort().forEach(m => html += `<option value="${m}">${m}</option>`);
+                selectMuni.innerHTML = html;
+            }
+            dashFiltrarLocalidades();
+        }
+
+        function dashFiltrarLocalidades() {
+            const muniFiltro = document.getElementById('dashFilterMunicipio').value;
+            const selectLocalidad = document.getElementById('dashFilterLocalidad');
+            
+            const localidadesSet = new Set();
+            (appState.casillas || []).forEach(c => {
+                const datos = getDatosElectorales(c);
+                if (muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) {
+                    if (datos.localidadReal) localidadesSet.add(datos.localidadReal);
+                }
+            });
+
+            let html = '<option value="Todas">Todas las localidades</option>';
+            Array.from(localidadesSet).sort().forEach(loc => html += `<option value="${loc}">${loc}</option>`);
+            selectLocalidad.innerHTML = html;
+            dashFiltrarSecciones();
+        }
+
+        function dashFiltrarSecciones() {
+            const muniFiltro = document.getElementById('dashFilterMunicipio').value;
+            const locFiltro = document.getElementById('dashFilterLocalidad').value;
+            const selectSeccion = document.getElementById('dashFilterSeccion');
+
+            const seccionesSet = new Set();
+            (appState.casillas || []).forEach(c => {
+                const datos = getDatosElectorales(c);
+                if ((muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) &&
+                    (locFiltro === 'Todas' || datos.localidadReal === locFiltro)) {
+                    if (datos.seccionReal) seccionesSet.add(datos.seccionReal);
+                }
+            });
+
+            let html = '<option value="Todas">Todas las secciones</option>';
+            Array.from(seccionesSet).sort((a,b) => parseInt(a,10) - parseInt(b,10)).forEach(sec => html += `<option value="${sec}">Sección ${sec}</option>`);
+            selectSeccion.innerHTML = html;
+            dashFiltrarCasillas();
+        }
+
+        function dashFiltrarCasillas() {
+            const muniFiltro = document.getElementById('dashFilterMunicipio').value;
+            const locFiltro = document.getElementById('dashFilterLocalidad').value;
+            const secFiltro = document.getElementById('dashFilterSeccion').value;
+            const selectCasilla = document.getElementById('dashFilterCasilla');
+
+            let html = '<option value="Todas">Todas las casillas</option>';
+            const casillasFiltradas = (appState.casillas || []).filter(c => {
+                const datos = getDatosElectorales(c);
+                return (muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) &&
+                       (locFiltro === 'Todas' || datos.localidadReal === locFiltro) &&
+                       (secFiltro === 'Todas' || datos.seccionReal === secFiltro);
+            });
+
+            casillasFiltradas.sort((a, b) => String(a.idCasilla).localeCompare(String(b.idCasilla))).forEach(c => {
+                const datos = getDatosElectorales(c);
+                html += `<option value="${c.idCasilla}">${datos.tipoCasillaReal}</option>`;
+            });
+            selectCasilla.innerHTML = html;
+            renderAutoridades();
         }
 
         window.addEventListener('DOMContentLoaded', () => {
