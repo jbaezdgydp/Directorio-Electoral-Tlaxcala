@@ -393,7 +393,7 @@
                             </button>
                         </div>
 
-                        <button onclick="exportarAutoridadesPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition duration-150 ease-in-out shadow text-sm flex items-center">
+                        <button onclick="exportarModuloActivoPDF()" class="bg-red-600 hover:bg-red-500 text-white px-3 py-2 rounded-md font-medium transition duration-150 ease-in-out shadow text-sm flex items-center">
                             <i class="fas fa-file-pdf mr-2"></i> Exportar
                         </button>
                     </div>
@@ -4599,6 +4599,173 @@
             selectLocalidad.innerHTML = html;
             
             renderCasillas();
+        }
+
+        function exportarModuloActivoPDF() {
+            if (appState.autoridadesSubTab === 'funcionarios') {
+                exportarAutoridadesPDF();
+            } else if (appState.autoridadesSubTab === 'sedes') {
+                exportarSedesPDF();
+            } else if (appState.autoridadesSubTab === 'casillas') {
+                exportarCasillasPDF();
+            }
+        }
+
+        function exportarCasillasPDF() {
+            showLoading('Generando reporte PDF de Casillas...');
+            
+            // 1. Clonar el contenedor principal de casillas
+            const gridOriginal = document.getElementById('casillasGrid');
+            const mapContainerOriginal = document.getElementById('casillasGeneralMapContainer');
+            
+            // 2. Obtener los textos de los filtros para el subtítulo
+            const mFed = document.getElementById('mapFilterCasillaFed')?.value || 'Todos';
+            const mLoc = document.getElementById('mapFilterCasillaLocDist')?.value || 'Todos';
+            const mMuni = document.getElementById('mapFilterCasillaMuni')?.value || 'Todos';
+            const mLoca = document.getElementById('mapFilterCasillaLoc')?.value || 'Todas';
+            let subtitulo = `Filtros: Fed (${mFed}), Loc (${mLoc}), Muni (${mMuni}), Localidad (${mLoca})`;
+
+            // 3. Crear el contenedor para impresión
+            const printContainer = document.createElement('div');
+            printContainer.style.width = '800px';
+            printContainer.style.margin = '0 auto';
+            printContainer.style.backgroundColor = '#f3f4f6';
+            printContainer.style.padding = '20px';
+
+            printContainer.innerHTML = `
+                <div style="margin-bottom: 20px; border-bottom: 2px solid #6b21a8; padding-bottom: 10px;">
+                    <h1 style="font-size: 24px; font-weight: bold; color: #1f2937; margin: 0;">Directorio y Ubicación de Casillas Electorales</h1>
+                    <p style="font-size: 14px; color: #4b5563; margin-top: 5px;">${subtitulo}</p>
+                </div>
+                
+                <!-- Contenedor para la captura del mapa -->
+                <div id="printMapContainer" style="margin-bottom: 20px; background: white; border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; page-break-inside: avoid;">
+                </div>
+
+                <!-- Contenedor para las tarjetas -->
+                <div id="printCasillasGrid" style="display: flex; flex-direction: column; gap: 14px;"></div>
+            `;
+
+            // 4. Copiar las tarjetas HTML
+            const printGrid = printContainer.querySelector('#printCasillasGrid');
+            Array.from(gridOriginal.children).forEach(tarjeta => {
+                const clon = tarjeta.cloneNode(true);
+                clon.className = "bg-white rounded-lg border border-gray-200 overflow-hidden p-4";
+                clon.style.width = "100%";
+                clon.style.pageBreakInside = "avoid";
+                printGrid.appendChild(clon);
+            });
+
+            // Ocultar la vista real y montar el de impresión en el body temporalmente
+            const dashboard = document.getElementById('autoridadesDashboardView');
+            dashboard.style.display = 'none';
+            document.body.appendChild(printContainer);
+            window.scrollTo(0, 0);
+
+            // 5. Convertir el mapa de Leaflet a imagen estática mediante html2canvas (para que salga en el PDF)
+            const printMapContainer = printContainer.querySelector('#printMapContainer');
+            if (mapContainerOriginal && mapContainerOriginal.innerHTML.trim() !== '' && !mapContainerOriginal.innerText.includes("No hay coordenadas")) {
+                // html2canvas necesita trabajar sobre elementos visibles en pantalla
+                dashboard.style.display = ''; // Lo mostramos un milisegundo
+                
+                // Usamos html2canvas local para capturar el div del mapa
+                import('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js').then(() => {
+                    html2canvas(mapContainerOriginal, { useCORS: true, logging: false }).then(canvas => {
+                        dashboard.style.display = 'none'; // Lo volvems a ocultar
+                        const img = document.createElement('img');
+                        img.src = canvas.toDataURL('image/png');
+                        img.style.width = '100%';
+                        img.style.height = 'auto';
+                        printMapContainer.appendChild(img);
+                        generarElPdfCasillas(printContainer, dashboard);
+                    });
+                }).catch(() => {
+                    // Si falla html2canvas, imprimimos sin mapa
+                    printMapContainer.innerHTML = '<p style="padding: 10px; color: gray;">[El mapa no pudo ser renderizado en la exportación]</p>';
+                    generarElPdfCasillas(printContainer, dashboard);
+                });
+            } else {
+                 printMapContainer.style.display = 'none';
+                 generarElPdfCasillas(printContainer, dashboard);
+            }
+        }
+        
+        function generarElPdfCasillas(printContainer, dashboard) {
+            const opciones = {
+                margin:       10,
+                filename:     'Reporte_Casillas_Electorales.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] }
+            };
+
+            html2pdf().set(opciones).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer);
+                dashboard.style.display = '';
+                hideLoading();
+            }).catch(error => {
+                console.error('Error al generar PDF:', error);
+                alert('Ocurrió un error al generar el PDF.');
+                document.body.removeChild(printContainer);
+                dashboard.style.display = '';
+                hideLoading();
+            });
+        }
+
+        // De paso, agregamos la exportación de la pestaña Sedes para que todo esté completo
+        function exportarSedesPDF() {
+            showLoading('Generando reporte PDF de Sedes...');
+            const gridOriginal = document.getElementById('sedesGrid');
+            const textoContador = document.getElementById('countSedesBadge').innerText;
+
+            const printContainer = document.createElement('div');
+            printContainer.style.width = '800px';
+            printContainer.style.margin = '0 auto';
+            printContainer.style.backgroundColor = '#f3f4f6';
+            printContainer.style.padding = '20px';
+
+            printContainer.innerHTML = `
+                <div style="margin-bottom: 20px; border-bottom: 2px solid #6b21a8; padding-bottom: 10px;">
+                    <h1 style="font-size: 24px; font-weight: bold; color: #1f2937; margin: 0;">Directorio de Sedes Electorales</h1>
+                    <p style="font-size: 14px; color: #4b5563; margin-top: 5px;">Total de sedes: ${textoContador}</p>
+                </div>
+                <div id="printSedesGrid" style="display: flex; flex-direction: column; gap: 14px;"></div>
+            `;
+
+            const printGrid = printContainer.querySelector('#printSedesGrid');
+            Array.from(gridOriginal.children).forEach(tarjeta => {
+                const clon = tarjeta.cloneNode(true);
+                clon.className = "bg-white rounded-lg border border-gray-200 overflow-hidden p-4";
+                clon.style.width = "100%";
+                clon.style.pageBreakInside = "avoid";
+                printGrid.appendChild(clon);
+            });
+
+            const dashboard = document.getElementById('autoridadesDashboardView');
+            dashboard.style.display = 'none';
+            document.body.appendChild(printContainer);
+            window.scrollTo(0, 0);
+
+            const opciones = {
+                margin:       10,
+                filename:     'Reporte_Sedes_Electorales.pdf',
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, useCORS: true, scrollY: 0, scrollX: 0 },
+                jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                pagebreak:    { mode: ['css', 'legacy'] }
+            };
+
+            html2pdf().set(opciones).from(printContainer).save().then(() => {
+                document.body.removeChild(printContainer);
+                dashboard.style.display = '';
+                hideLoading();
+            }).catch(error => {
+                alert('Ocurrió un error al generar el PDF.');
+                document.body.removeChild(printContainer);
+                dashboard.style.display = '';
+                hideLoading();
+            });
         }
 
     </script>
