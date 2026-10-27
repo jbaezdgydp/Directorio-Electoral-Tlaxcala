@@ -534,17 +534,17 @@
                                 <p class="text-xs text-gray-500">Ubicación georreferenciada de las casillas en el estado.</p>
                             </div>
                             
-                            <!-- NUEVO PANEL DE 4 FILTROS -->
+                            <!-- PANEL DE 4 FILTROS EN CASCADA -->
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3 w-full bg-purple-50 p-3 rounded-lg border border-purple-100">
                                 <div>
                                     <label class="block text-[10px] font-bold text-purple-800 uppercase mb-1">Distrito Federal</label>
-                                    <select id="mapFilterCasillaFed" onchange="renderCasillas()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                                    <select id="mapFilterCasillaFed" onchange="mapFiltrarDistritosLocales()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
                                         <option value="Todos">Todos</option>
                                     </select>
                                 </div>
                                 <div>
                                     <label class="block text-[10px] font-bold text-purple-800 uppercase mb-1">Distrito Local</label>
-                                    <select id="mapFilterCasillaLocDist" onchange="renderCasillas()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
+                                    <select id="mapFilterCasillaLocDist" onchange="mapFiltrarMunicipios()" class="w-full border border-gray-300 rounded-md px-2 py-1.5 text-xs focus:ring-2 focus:ring-purple-500 bg-white">
                                         <option value="Todos">Todos</option>
                                     </select>
                                 </div>
@@ -561,6 +561,7 @@
                                     </select>
                                 </div>
                             </div>
+                          
                         </div>
                         <div id="casillasGeneralMapContainer" class="w-full h-[500px] rounded-md border border-gray-300 z-10 relative bg-gray-50"></div>
                     </div>
@@ -2769,46 +2770,23 @@
 
             const countCasillasEl = document.getElementById('countCasillasBadge');
             if (countCasillasEl) countCasillasEl.innerText = appState.casillas.length;
-            
-           const mapFilterCas = document.getElementById('mapFilterCasillaMuni');
-            const mapFilterFed = document.getElementById('mapFilterCasillaFed');
-            const mapFilterLocDist = document.getElementById('mapFilterCasillaLocDist');
-            
-            if (mapFilterCas && mapFilterCas.options.length <= 1) {
-                const muniSet = new Set();
-                const fedSet = new Set();
-                const locDistSet = new Set();
 
+            // BLOQUE CORREGIDO (PASO 2): Inicialización del filtro en cascada
+            const mapFilterFed = document.getElementById('mapFilterCasillaFed');
+            if (mapFilterFed && mapFilterFed.options.length <= 1) {
+                const fedSet = new Set();
                 appState.casillas.forEach(c => {
-                    const datos = getDatosElectorales(c);
-                    if (datos.municipioReal) muniSet.add(datos.municipioReal);
                     if (c.distritoFederal) fedSet.add(c.distritoFederal.trim());
-                    if (c.distritoLocal) locDistSet.add(c.distritoLocal.trim());
                 });
 
-                let htmlMuni = '<option value="Todos">Todos los municipios</option>';
-                Array.from(muniSet).sort().forEach(m => htmlMuni += `<option value="${m}">${m}</option>`);
-                mapFilterCas.innerHTML = htmlMuni;
+                let htmlFed = '<option value="Todos">Todos</option>';
+                Array.from(fedSet).filter(Boolean).sort().forEach(d => htmlFed += `<option value="${d}">${d}</option>`);
+                mapFilterFed.innerHTML = htmlFed;
 
-                if (mapFilterFed) {
-                    let htmlFed = '<option value="Todos">Todos</option>';
-                    Array.from(fedSet).filter(Boolean).sort().forEach(d => htmlFed += `<option value="${d}">${d}</option>`);
-                    mapFilterFed.innerHTML = htmlFed;
+                // Iniciar el efecto cascada (este llenará automáticamente los locales, luego municipios y luego localidades)
+                if (typeof mapFiltrarDistritosLocales === 'function') {
+                    mapFiltrarDistritosLocales();
                 }
-
-                if (mapFilterLocDist) {
-                    let htmlLocDist = '<option value="Todos">Todos</option>';
-                    Array.from(locDistSet).filter(Boolean).sort((a,b) => {
-                        const numA = parseInt(a.replace(/\D/g, ''));
-                        const numB = parseInt(b.replace(/\D/g, ''));
-                        if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
-                        return a.localeCompare(b);
-                    }).forEach(d => htmlLocDist += `<option value="${d}">${d}</option>`);
-                    mapFilterLocDist.innerHTML = htmlLocDist;
-                }
-                
-                // Inicializar el filtro secundario de Localidad
-                mapFiltrarLocalidades();
             }
         }
 
@@ -4530,16 +4508,70 @@
             checkSavedSession();
         });
 
+        function mapFiltrarDistritosLocales() {
+            const fedFiltro = document.getElementById('mapFilterCasillaFed')?.value || 'Todos';
+            const selectLoc = document.getElementById('mapFilterCasillaLocDist');
+            if(!selectLoc) return;
+
+            const locSet = new Set();
+            (appState.casillas || []).forEach(c => {
+                if (fedFiltro === 'Todos' || (c.distritoFederal && c.distritoFederal.trim() === fedFiltro)) {
+                    if (c.distritoLocal) locSet.add(c.distritoLocal.trim());
+                }
+            });
+
+            let html = '<option value="Todos">Todos</option>';
+            Array.from(locSet).filter(Boolean).sort((a,b) => {
+                const numA = parseInt(a.replace(/\D/g, ''));
+                const numB = parseInt(b.replace(/\D/g, ''));
+                if(!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                return a.localeCompare(b);
+            }).forEach(d => html += `<option value="${d}">${d}</option>`);
+            selectLoc.innerHTML = html;
+
+            mapFiltrarMunicipios();
+        }
+
+        function mapFiltrarMunicipios() {
+            const fedFiltro = document.getElementById('mapFilterCasillaFed')?.value || 'Todos';
+            const locDistFiltro = document.getElementById('mapFilterCasillaLocDist')?.value || 'Todos';
+            const selectMuni = document.getElementById('mapFilterCasillaMuni');
+            if (!selectMuni) return;
+
+            const muniSet = new Set();
+            (appState.casillas || []).forEach(c => {
+                const matchFed = fedFiltro === 'Todos' || (c.distritoFederal && c.distritoFederal.trim() === fedFiltro);
+                const matchLocDist = locDistFiltro === 'Todos' || (c.distritoLocal && c.distritoLocal.trim() === locDistFiltro);
+                if (matchFed && matchLocDist) {
+                    const datos = getDatosElectorales(c);
+                    if (datos.municipioReal) muniSet.add(datos.municipioReal);
+                }
+            });
+
+            let html = '<option value="Todos">Todos los municipios</option>';
+            Array.from(muniSet).sort().forEach(m => html += `<option value="${m}">${m}</option>`);
+            selectMuni.innerHTML = html;
+
+            mapFiltrarLocalidades();
+        }
+
         function mapFiltrarLocalidades() {
+            const fedFiltro = document.getElementById('mapFilterCasillaFed')?.value || 'Todos';
+            const locDistFiltro = document.getElementById('mapFilterCasillaLocDist')?.value || 'Todos';
             const muniFiltro = document.getElementById('mapFilterCasillaMuni')?.value || 'Todos';
             const selectLocalidad = document.getElementById('mapFilterCasillaLoc');
             if (!selectLocalidad) return;
             
             const localidadesSet = new Set();
             (appState.casillas || []).forEach(c => {
-                const datos = getDatosElectorales(c);
-                if (muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) {
-                    if (datos.localidadReal) localidadesSet.add(datos.localidadReal);
+                const matchFed = fedFiltro === 'Todos' || (c.distritoFederal && c.distritoFederal.trim() === fedFiltro);
+                const matchLocDist = locDistFiltro === 'Todos' || (c.distritoLocal && c.distritoLocal.trim() === locDistFiltro);
+                
+                if (matchFed && matchLocDist) {
+                    const datos = getDatosElectorales(c);
+                    if (muniFiltro === 'Todos' || datos.municipioReal === muniFiltro) {
+                        if (datos.localidadReal) localidadesSet.add(datos.localidadReal);
+                    }
                 }
             });
 
@@ -4547,7 +4579,6 @@
             Array.from(localidadesSet).sort().forEach(loc => html += `<option value="${loc}">${loc}</option>`);
             selectLocalidad.innerHTML = html;
             
-            // Una vez llena la lista de localidades, procedemos a pintar el mapa
             renderCasillas();
         }
 
